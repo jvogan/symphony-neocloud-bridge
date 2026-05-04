@@ -12,7 +12,7 @@ Use this reference when the short happy path in `SKILL.md` is not enough.
 - `render-startup`: render the startup script without launching.
 - `render-runpodctl-create`: render the equivalent `runpodctl pod create` command, including `--terminate-after`, without launching.
 - `plan`: print the dry-run execution plan.
-- `preflight`: run launch, profile, provider, contract, bootstrap image-capability, payload-size, and egress checks.
+- `preflight`: run launch, profile, provider, contract, bootstrap image-capability, payload-size, productivity, and egress checks.
 - `egress-plan`: render artifact egress requirements, including AWS S3 presigned upload env refs when declared.
 - `productivity-plan`: render live progress and peek-channel checks; distinguish provider `RUNNING`, workload productivity, SSH/log tail, and completion-only artifact inspection.
 - `source-check`: check git source/ref reachability before paid launch. Use `--execute` only when network access and git credentials are expected to work.

@@ -1,10 +1,30 @@
 # Symphony RunPod Bridge
 
-Reusable RunPod execution lane for Symphony + Linear.
+Local-first guardrails for running agent-declared workloads on RunPod.
 
-## Thesis
+This project helps AI-agent workflows turn a reviewed workload contract into a remote RunPod execution with preflight checks, artifact proof, cost records, and cleanup. It is designed for Symphony + Linear setups, but the core CLI is just a standard-library Python tool that can validate manifests, render startup scripts, prepare handoff packets, run local dry-runs, and guard paid RunPod pod creation.
 
-RunPod should be a remote execution plane, not the orchestrator. Linear remains the scientific ledger. Symphony dispatches Codex workers. This bridge turns an authorized Linear issue plus a repo workload contract into a safe RunPod run with artifact proof and cleanup.
+![RunPod Bridge social preview](assets/social-preview/runpod-bridge-social-preview-01.png)
+
+It is not a domain-science framework and it is not a general RunPod SDK. Domain repos provide commands, validation checks, and expected artifacts; this bridge owns the remote execution mechanics and blocks false success.
+
+## What It Does
+
+- Validates launch manifests before any paid resource can be created.
+- Renders auditable startup scripts and provider handoff packets.
+- Runs the same startup contract locally for dry-run validation.
+- Guards RunPod pod creation behind authorization, budget, immutable source, artifact, and cleanup gates.
+- Monitors resource state, runtime health, workload heartbeats, logs, and live productivity channels.
+- Hashes declared artifacts and writes a parseable `symphony-outcome` closeout.
+- Provides public-release audits so examples, skill assets, and docs stay scrubbed.
+
+## When To Use It
+
+Use this bridge when an AI agent or orchestrator needs to run a declared batch workload on RunPod and you need a clear audit trail. It is useful for engineering jobs, model evaluation, dataset preprocessing, report generation, and other workloads that can define commands, validation checks, and artifacts.
+
+Do not use it to bypass RunPod authorization, run long-lived public services, store credentials in manifests, or claim scientific/model success without separate domain validation.
+
+## Flow
 
 ```text
 Linear issue
@@ -16,6 +36,39 @@ Linear issue
   -> cleanup
   -> Linear symphony-outcome
 ```
+
+RunPod is treated as the remote execution plane, not the orchestrator. Linear remains the work ledger. Symphony dispatches workers. The bridge turns an authorized issue plus a repo workload contract into a RunPod run with artifact proof and cleanup.
+
+## Quick Start
+
+No RunPod API key is needed for local validation:
+
+```bash
+python3 -m pip install -e .
+bin/runpod-bridge public-audit
+bin/runpod-bridge validate-manifest examples/cheap-pod/launch_manifest.json
+bin/runpod-bridge plan examples/cheap-pod/launch_manifest.json
+bin/runpod-bridge prepare examples/cheap-pod/launch_manifest.json --out-dir .runtime/cheap-pod-packet
+bin/runpod-bridge run-local examples/cheap-pod/launch_manifest.json \
+  --repo-dir .runtime/cheap-pod-repo \
+  --runtime-dir .runtime/cheap-pod-run
+```
+
+For an agent-facing workflow, install or link the skill at `skills/runpod-symphony/` into the relevant Codex skill home, then run:
+
+```bash
+bin/runpod-bridge doctor
+```
+
+`doctor` warnings are acceptable for local dry-runs. Paid remote mutation additionally requires `RUNPOD_API_KEY`, a remote-ready manifest, and explicit execute flags.
+
+## Safety Model
+
+- Local dry-run is the default path.
+- Paid RunPod mutation requires `remote_launch_allowed: true`, explicit `launch_authorization`, finite budget/runtime, immutable source, expected artifacts, validation commands, and cleanup policy.
+- Remote create/cleanup commands require `--execute` plus explicit confirmation flags.
+- Nontrivial paid runs must expose a live productivity channel such as sanitized `/healthz`, SSH/log tail, or another fetchable status packet.
+- Success requires declared artifacts, validation checks, hashes, and cleanup status. Pod lifecycle events alone are not success.
 
 ## Scope
 
@@ -40,6 +93,8 @@ Domain repos define workload commands and success artifacts. This bridge validat
 ## Starting Artifacts
 
 - [skills/runpod-symphony/SKILL.md](skills/runpod-symphony/SKILL.md)
+- [skills/runpod-symphony/references/worker-readiness.md](skills/runpod-symphony/references/worker-readiness.md)
+- [skills/runpod-symphony/references/failure-playbook.md](skills/runpod-symphony/references/failure-playbook.md)
 - [docs/product-brief.md](docs/product-brief.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/runpod-worker-readiness.md](docs/runpod-worker-readiness.md)
@@ -167,4 +222,4 @@ bin/runpod-bridge linear-comment TEAM-123 --body-file runpod-execution/symphony_
 
 ## Public Release
 
-Run `bin/runpod-bridge public-audit` before publishing. It checks required release files, JSON validity, manifest validity, contract self-checks, and known local/internal text patterns.
+Run `bin/runpod-bridge public-audit` before publishing. It checks required release files, disallowed generated/private paths, repo-local skill linkage, template sync, source/docs/example text scans, JSON validity, manifest validity, contract self-checks, and Linear issue examples.

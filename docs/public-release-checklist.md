@@ -35,14 +35,19 @@ bin/runpod-bridge dashboard --scan-dir .runtime --out .runtime/runpod-dashboard.
 ## Content Review
 
 - No local absolute paths.
+- No local-private install defaults in code, docs, examples, tests, wrappers, logs, or skill assets.
 - No organization-specific demo names.
 - No API keys, tokens, registry credentials, or private data.
 - No presigned URLs; manifests must carry only runtime refs such as `archive_upload_url_ref`.
 - No generated `runpod-execution/` packets.
+- No tracked `.runtime`, cache, `__pycache__`, `.env*`, `env.sh`, closeout, handoff, or artifact-hash files.
 - Examples remain `remote_launch_allowed: false`.
 - Any remote smoke record is scrubbed before publishing.
 - Any Linear issue example validates and contains no workspace-specific identifiers.
 - HTTP proxy examples contain only sanitized artifacts and explain the public exposure risk.
+- Top-level templates match the copies under `skills/runpod-symphony/assets/templates/`.
+- `.codex/skills/runpod-symphony` resolves to the public skill source at `skills/runpod-symphony`.
+- Skill references include generic worker-readiness and failure-playbook guidance, with no private run details.
 
 ## Operational Review
 

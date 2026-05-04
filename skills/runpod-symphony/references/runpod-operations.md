@@ -2,6 +2,8 @@
 
 Read this when enabling or operating remote RunPod runs from Symphony workers.
 
+For ambiguous pod create, boot, proxy, runtime-metrics, git-bootstrap, GPU scheduling, or artifact-fetch failures, use `failure-playbook.md` before relaunching the same workload.
+
 ## Tool Surface
 
 The RunPod MCP server can manage pods, templates, endpoints, network volumes, and container registry auths when `RUNPOD_API_KEY` is injected into the worker runtime. The docs MCP server is separate and does not require auth.

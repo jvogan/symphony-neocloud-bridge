@@ -111,6 +111,12 @@ def build_productivity_plan(
         }
     )
 
+    live_channel_names = {"live_progress_http", "ssh_log_tail"}
+    live_productivity_channels = [
+        signal
+        for signal in signals
+        if signal.get("name") in live_channel_names and signal.get("status") == "configured"
+    ]
     productive_definition = [
         "fresh workload heartbeat or live /healthz status within max_silent_minutes",
         "status.json says running plus heartbeat/log byte count changes, or SSH tail shows current command output",
@@ -125,6 +131,8 @@ def build_productivity_plan(
         "status_file": status_file,
         "heartbeat_file": heartbeat_file,
         "log_file": startup_log,
+        "has_live_productivity_channel": bool(live_productivity_channels),
+        "live_productivity_channels": live_productivity_channels,
         "productive_definition": productive_definition,
         "signals": signals,
         "commands": commands,

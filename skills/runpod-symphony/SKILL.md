@@ -7,6 +7,19 @@ description: Use for Symphony + Linear RunPod work: launch manifests, provider h
 
 Use this skill to run repo-defined workloads on RunPod with Symphony as the dispatcher and Linear as the work ledger. Own the remote execution mechanics; leave domain science, model interpretation, and workload-specific success criteria in the domain repo.
 
+## When To Use
+
+- A prompt mentions RunPod-backed Symphony/Linear execution, launch manifests, provider handoffs, remote smoke tests, artifact egress, pod cleanup, cost closeout, or `symphony-outcome`.
+- A worker needs to decide whether it may mutate RunPod resources or should stop at a prepared handoff packet.
+- A run is stuck, ambiguous, or risky and needs provider/runtime/workload evidence separated before relaunch.
+- A public-release pass needs the skill, examples, templates, and docs checked for generated artifacts, private paths, or organization-specific assumptions.
+
+## When Not To Use
+
+- The task is only a generic RunPod API question with no Symphony/Linear workload contract.
+- The user wants domain-science interpretation, model-quality claims, or biological conclusions from artifacts. The domain repo owns that validation.
+- The manifest or issue contains literal secrets, private data, unpublished sequences, private customer/process records, or generated run packets. Stop and ask for a sanitized contract or secure runtime references.
+
 ## Operating Rules
 
 - Default to local dry-run validation until the operator or Linear issue explicitly authorizes remote launch.
@@ -36,13 +49,15 @@ Use this skill to run repo-defined workloads on RunPod with Symphony as the disp
 3. Normalize the contract into a launch manifest. If one does not exist, start from `assets/templates/runpod-launch-manifest.template.json`.
 4. Validate locally first. Prefer repo tooling such as `runpod-bridge validate-manifest`, `runpod-bridge contract-self-check`, `runpod-bridge plan`, and `runpod-bridge prepare` when available; otherwise use the checklist in `references/contract-checklist.md`. The contract self-check should prove input materialization, exact tool invocation, artifact validation, and claim boundaries.
 5. Render or inspect the startup command without launching paid resources. Confirm it runs only the declared workload and validation commands. Check rendered RunPod create payload size through `preflight`; large inline `dockerStartCmd` payloads near 48KB are risky, and payloads above the bridge hard limit must be compressed or moved to a repo/snapshot/object-store handoff before paid launch.
-6. Stop at a dry-run plan unless the launch gate is satisfied: `remote_launch_allowed: true`, explicit `launch_authorization`, budget/time limits, cleanup policy, expected artifacts, validation commands, passing contract self-check, and exact repo source.
-7. After the launch gate passes, create or start RunPod resources using the declared manifest. Record pod ID, image/template, data center, volumes, ports, start time, and startup command source.
-8. Monitor resource state, runtime health, workload state, and a peek channel. Poll `get_pod` with machine and network volume details, then use `runtime-metrics` to catch crash loops from low or resetting `uptimeInSeconds`. Require workload-written heartbeat/status/log files for execution progress because provider runtime metrics do not prove productivity and MCP does not currently provide pod log streaming or in-pod exec. For live visibility, prefer `startup.progress.http_status_server_port` for sanitized smokes or SSH/log tail for private long-running workloads.
-9. Capture logs and artifacts. Compute SHA-256 hashes for declared artifacts, scan live text artifacts for the forbidden markers listed in `references/contract-checklist.md`, and run validation commands.
-10. When workspace archive egress is declared, require the archive packet as part of closeout evidence.
-11. Enforce cleanup. Stop or delete the pod unless retention is approved in the issue or manifest; if a network volume is attached, terminate the pod and preserve the volume rather than assuming `stop` is available.
-12. Close out with a parseable `symphony-outcome` block based on `assets/templates/symphony-outcome.md`.
+6. For any long, expensive, large, or huge run, require `productivity-plan` to show a live productivity channel before paid launch. Provider `RUNNING`, billing records, GraphQL utilization, and completion-only artifact servers do not satisfy this gate.
+7. Before the first real paid workload on a new route, run the smallest real smoke that proves create, boot, progress signal, artifact egress, hashing, and cleanup. Use the smoke ladder in `references/worker-readiness.md` when choosing CPU, exact-image, volume, or GPU canaries.
+8. Stop at a dry-run plan unless the launch gate is satisfied: `remote_launch_allowed: true`, explicit `launch_authorization`, budget/time limits, cleanup policy, expected artifacts, validation commands, passing contract self-check, and exact repo source.
+9. After the launch gate passes, create or start RunPod resources using the declared manifest. Record pod ID, image/template, data center, volumes, ports, start time, and startup command source.
+10. Monitor resource state, runtime health, workload state, and a peek channel. Poll `get_pod` with machine and network volume details, then use `runtime-metrics` to catch crash loops from low or resetting `uptimeInSeconds`. Require workload-written heartbeat/status/log files for execution progress because provider runtime metrics do not prove productivity and MCP does not currently provide pod log streaming or in-pod exec. For live visibility, prefer `startup.progress.http_status_server_port` for sanitized smokes or SSH/log tail for private long-running workloads.
+11. Capture logs and artifacts. Compute SHA-256 hashes for declared artifacts, scan live text artifacts for the forbidden markers listed in `references/contract-checklist.md`, and run validation commands.
+12. When workspace archive egress is declared, require the archive packet as part of closeout evidence.
+13. Enforce cleanup. Stop or delete the pod unless retention is approved in the issue or manifest; if a network volume is attached, terminate the pod and preserve the volume rather than assuming `stop` is available.
+14. Close out with a parseable `symphony-outcome` block based on `assets/templates/symphony-outcome.md`.
 
 ## Tooling Guidance
 
@@ -69,6 +84,7 @@ Use this skill to run repo-defined workloads on RunPod with Symphony as the disp
 - For AWS artifact egress, prefer `aws_s3_presigned_upload` when the pod should not receive AWS credentials. Use `object_store_upload` only when runtime-injected AWS-compatible credentials and CLI behavior are explicitly part of the contract.
 - For AWS-backed orchestration, run `aws-orchestrator-plan` first. It should render STS, RunPod network-volume S3, ECR registry refresh, Secrets Manager, SQS, DynamoDB lock, and EventBridge cleanup templates without executing them.
 - When remote launch is not authorized, produce a concrete plan and blocker list instead of launching.
+- When preparing this skill or bridge for public release, run `public-audit` from the source checkout and treat failures in source/tests/bin scanning, repo-local skill linkage, template sync, generated packets, or local-private path markers as release blockers.
 
 ## Run Choice
 
@@ -82,6 +98,10 @@ These commands do not require `RUNPOD_API_KEY` or paid RunPod resources: `doctor
 Read `references/runpod-operations.md` when a task involves enabling RunPod access, SSH/SCP, port exposure, monitoring, cost reporting, or worker coordination.
 
 Read `references/cli-reference.md` when you need the full command inventory.
+
+Read `references/worker-readiness.md` before assigning RunPod work to Symphony/Codex workers, especially when deciding whether a worker can mutate cloud resources or should produce a handoff packet only.
+
+Read `references/failure-playbook.md` when pod create, boot, proxy, runtime metrics, git bootstrap, GPU scheduling, or artifact fetch behavior is ambiguous.
 
 In this repo, read `docs/runpod-superpowers-2026-05.md` before changing provider strategy around Flash, Serverless endpoints, `runpodctl`, cost centers, or Instant Clusters.
 
@@ -113,4 +133,4 @@ runpod-execution/
 
 Keep the bridge reusable for any Symphony + Linear setup. Domain workloads should pass contracts into this skill rather than becoming hard-coded behavior.
 
-Before public release, run `runpod-bridge public-audit` and scrub organization-specific assumptions from examples and references.
+Before public release, run `runpod-bridge public-audit` and scrub organization-specific assumptions from code, examples, references, logs, and skill assets.

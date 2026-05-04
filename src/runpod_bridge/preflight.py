@@ -8,6 +8,7 @@ from .egress import build_egress_plan
 from .manifest import build_plan, validate_manifest
 from .payload import create_request_payload_report
 from .profiles import recommend_profile
+from .productivity import build_productivity_plan
 from .providers import provider_capabilities
 from .runpod_rest import build_create_pod_request
 from .source_check import check_source_reachability
@@ -23,6 +24,7 @@ def analyze_preflight(manifest: dict[str, Any]) -> dict[str, Any]:
     source = check_source_reachability(manifest, execute=False)
     payload = create_request_payload_report(build_create_pod_request(manifest)) if validation.ok else {}
     bootstrap = bootstrap_requirements_report(manifest)
+    productivity = build_productivity_plan(manifest)
     errors = [issue.__dict__ for issue in validation.errors]
     warnings = [issue.__dict__ for issue in validation.warnings]
     recommendations: list[str] = []
@@ -52,6 +54,22 @@ def analyze_preflight(manifest: dict[str, Any]) -> dict[str, Any]:
     if bootstrap.get("warnings"):
         warnings.extend(bootstrap["warnings"])
     recommendations.extend(bootstrap.get("recommendations", []))
+    if productivity.get("blockers"):
+        warnings.extend(
+            {"severity": "warning", "path": "productivity", "message": item}
+            for item in productivity["blockers"]
+        )
+    if requires_live_productivity_gate(manifest, plan):
+        if not productivity.get("has_live_productivity_channel"):
+            message = (
+                "nontrivial paid RunPod launch requires a live productivity channel: "
+                "configure startup.progress.http_status_server_port on an exposed http/tcp port "
+                "for sanitized progress, or access.ssh_required with SSH/log tail for private workloads"
+            )
+            if manifest.get("remote_launch_allowed") is True:
+                errors.append({"severity": "error", "path": "productivity", "message": message})
+            else:
+                recommendations.append(message)
 
     return {
         "ok": not errors,
@@ -65,7 +83,28 @@ def analyze_preflight(manifest: dict[str, Any]) -> dict[str, Any]:
         "source": source,
         "payload": payload,
         "bootstrap_requirements": bootstrap,
+        "productivity": productivity,
         "errors": errors,
         "warnings": warnings,
         "recommendations": recommendations,
     }
+
+
+def requires_live_productivity_gate(manifest: dict[str, Any], plan: dict[str, Any]) -> bool:
+    if plan.get("task_scale") in ("large", "huge"):
+        return True
+    budget = manifest.get("budget", {}) if isinstance(manifest.get("budget"), dict) else {}
+    max_runtime = number_or_zero(budget.get("max_runtime_minutes"))
+    max_cost = number_or_zero(budget.get("max_estimated_cost_usd"))
+    return max_runtime > 30 or max_cost > 5
+
+
+def number_or_zero(value: Any) -> float:
+    if isinstance(value, bool):
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return 0.0

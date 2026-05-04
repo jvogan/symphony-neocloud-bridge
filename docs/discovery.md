@@ -38,6 +38,8 @@ Check the current installation with:
 runpod-bridge doctor
 ```
 
+`doctor` always checks this checkout and the normal Codex skill home. It checks a separate Symphony worker home or shared CLI wrapper only when `RUNPOD_BRIDGE_SYMPHONY_HOME` or `RUNPOD_BRIDGE_SYMPHONY_BIN` is set, so public checkouts do not assume a private local worker layout.
+
 ## Target Repos
 
 Repo-local `AGENTS.md` files should not duplicate the full bridge instructions. They should say:

@@ -31,7 +31,12 @@ from runpod_bridge.productivity import build_productivity_plan
 from runpod_bridge.profiles import get_profile, recommend_profile
 from runpod_bridge.providers import provider_capabilities
 from runpod_bridge.proxy import proxy_url, required_proxy_paths, tcp_endpoint_from_pod, tcp_url
-from runpod_bridge.public_readiness import run_public_audit
+from runpod_bridge.public_readiness import (
+    find_disallowed_release_paths,
+    run_public_audit,
+    scan_for_forbidden_text,
+    validate_readme_sections,
+)
 from runpod_bridge.recovery import analyze_recovery
 from runpod_bridge.remote_run import acquire_launch_lock, release_launch_lock, run_remote_flow
 from runpod_bridge.runpod_rest import (
@@ -310,6 +315,7 @@ class BridgeTests(unittest.TestCase):
         self.assertTrue(result.ok, result.as_dict())
         plan = build_productivity_plan(manifest, pod_id="pod-123", public_ip="127.0.0.1", external_port=54311)
         self.assertTrue(plan["ok"], plan)
+        self.assertTrue(plan["has_live_productivity_channel"], plan)
         signal_status = {signal["name"]: signal["status"] for signal in plan["signals"]}
         self.assertEqual(signal_status["live_progress_http"], "configured")
         self.assertEqual(signal_status["artifact_inspection_http"], "completion_only")
@@ -829,6 +835,23 @@ class BridgeTests(unittest.TestCase):
         preflight = analyze_preflight(manifest)
         self.assertIn("recommended_profile", preflight)
         self.assertEqual(preflight["recommended_profile"]["name"], "huge-sharded-volume")
+        self.assertTrue(preflight["productivity"]["has_live_productivity_channel"], preflight["productivity"])
+
+    def test_preflight_blocks_nontrivial_remote_launch_without_live_productivity(self):
+        manifest = load_manifest(ROOT / "examples" / "public-smoke" / "launch_manifest.json")
+        manifest["remote_launch_allowed"] = True
+        manifest["launch_authorization"] = {
+            "source": "test",
+            "approved_by": "test",
+            "approved_at": "2026-04-30T00:00:00Z",
+        }
+        manifest["workload"]["scale"] = "large"
+        manifest["budget"]["max_runtime_minutes"] = 90
+        manifest["budget"]["max_estimated_cost_usd"] = 10
+        preflight = analyze_preflight(manifest)
+        self.assertFalse(preflight["ok"], preflight)
+        self.assertFalse(preflight["productivity"]["has_live_productivity_channel"])
+        self.assertTrue(any(issue["path"] == "productivity" for issue in preflight["errors"]))
 
     def test_runpod_network_volume_s3_egress_mode(self):
         manifest = load_manifest(ROOT / "examples" / "huge-sharded" / "launch_manifest.json")
@@ -1045,6 +1068,30 @@ class BridgeTests(unittest.TestCase):
     def test_public_audit_passes(self):
         report = run_public_audit(ROOT)
         self.assertEqual(report["overall"], "pass", report)
+
+    def test_public_text_scan_covers_source_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "src").mkdir()
+            leaked_path = "/" + "Users/example/private"
+            (base / "src" / "leak.py").write_text(f'path = "{leaked_path}"\n')
+            hits = scan_for_forbidden_text(base)
+            self.assertTrue(any(hit["path"] == "src/leak.py" for hit in hits), hits)
+
+    def test_public_path_scan_blocks_generated_artifacts_without_git(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "runpod-execution").mkdir()
+            (base / "runpod-execution" / "status.json").write_text("{}")
+            hits = find_disallowed_release_paths(base)
+            self.assertTrue(any(hit["path"] == "runpod-execution/status.json" for hit in hits), hits)
+
+    def test_public_readme_scan_requires_release_sections(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "README.md").write_text("# Example\n")
+            gaps = validate_readme_sections(base)
+            self.assertTrue(any(gap["heading"] == "## Quick Start" for gap in gaps), gaps)
 
 
 if __name__ == "__main__":

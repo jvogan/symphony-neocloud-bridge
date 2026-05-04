@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import subprocess
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .contract import contract_self_check
@@ -10,11 +11,55 @@ from .manifest import load_manifest, validate_manifest
 
 
 BRIDGE_ROOT = Path(__file__).resolve().parents[2]
-SCAN_GLOBS = ("*.md", "*.json", "*.toml", "*.yaml", "*.yml")
-SCAN_DIRS = ("README.md", "AGENTS.md", "docs", "templates", "skills", "examples", "logs", "pyproject.toml")
+SCAN_SUFFIXES = {".md", ".json", ".toml", ".yaml", ".yml", ".py", ".sh"}
+SCAN_DIRS = (
+    "README.md",
+    "AGENTS.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    ".gitignore",
+    "pyproject.toml",
+    "bin/runpod-bridge",
+    "docs",
+    "templates",
+    "skills",
+    "examples",
+    "logs",
+    "src",
+    "tests",
+)
+SKIP_DIR_NAMES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".venv", "build", "dist"}
+DISALLOWED_RELEASE_PREFIXES = (
+    ".runtime/",
+    "runpod-execution/",
+    "internal/",
+    "private/",
+    ".claude/",
+    "build/",
+    "dist/",
+)
+DISALLOWED_RELEASE_NAMES = {
+    ".DS_Store",
+    ".env",
+    "env.sh",
+    "artifact_hashes.json",
+    "closeout.json",
+    "local_preflight.json",
+    "runpod_resource_record.json",
+    "symphony_outcome.md",
+}
+DISALLOWED_RELEASE_SUFFIXES = (".egg-info",)
+DISALLOWED_RELEASE_PARTS = {
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+}
 FORBIDDEN_TEXT = (
     "/" + "Users/",
     "jacob" + "vogan",
+    "auto" + "nomy",
     "Bio" + "Symphony",
     "bio" + "symphony",
     "Gene" + "Cluster",
@@ -31,8 +76,32 @@ REQUIRED_FILES = (
     "CONTRIBUTING.md",
     "docs/public-release-checklist.md",
     "docs/remote-smoke-runbook.md",
+    "assets/social-preview/runpod-bridge-social-preview-01.png",
     "templates/runpod-launch-manifest.template.json",
     "skills/runpod-symphony/SKILL.md",
+    "skills/runpod-symphony/references/failure-playbook.md",
+    "skills/runpod-symphony/references/worker-readiness.md",
+)
+README_REQUIRED_HEADINGS = (
+    "## What It Does",
+    "## When To Use It",
+    "## Quick Start",
+    "## Safety Model",
+    "## Public Release",
+)
+TEMPLATE_PAIRS = (
+    (
+        "templates/runpod-launch-manifest.template.json",
+        "skills/runpod-symphony/assets/templates/runpod-launch-manifest.template.json",
+    ),
+    (
+        "templates/linear-runpod-issue.md",
+        "skills/runpod-symphony/assets/templates/linear-runpod-issue.md",
+    ),
+    (
+        "templates/symphony-outcome.md",
+        "skills/runpod-symphony/assets/templates/symphony-outcome.md",
+    ),
 )
 
 
@@ -43,6 +112,44 @@ def run_public_audit(root: str | Path = BRIDGE_ROOT) -> dict[str, Any]:
     for rel_path in REQUIRED_FILES:
         path = base / rel_path
         add(checks, f"required_file:{rel_path}", "pass" if path.is_file() else "fail", str(path))
+
+    readme_results = validate_readme_sections(base)
+    add(
+        checks,
+        "readme_release_sections",
+        "pass" if not readme_results else "fail",
+        "README explains purpose, use, quick start, safety, and release checks"
+        if not readme_results
+        else f"{len(readme_results)} README section gaps",
+        details=readme_results,
+    )
+
+    path_hits = find_disallowed_release_paths(base)
+    add(
+        checks,
+        "no_generated_or_private_paths",
+        "pass" if not path_hits else "fail",
+        "no generated or private release paths found" if not path_hits else f"{len(path_hits)} disallowed release paths",
+        details=path_hits,
+    )
+
+    link_result = validate_repo_skill_link(base)
+    add(
+        checks,
+        "repo_local_skill_link",
+        "pass" if link_result["ok"] else "fail",
+        link_result["message"],
+        details=link_result.get("details"),
+    )
+
+    sync_results = validate_template_sync(base)
+    add(
+        checks,
+        "skill_templates_synced",
+        "pass" if not sync_results else "fail",
+        "top-level templates match skill asset templates" if not sync_results else f"{len(sync_results)} template mismatches",
+        details=sync_results,
+    )
 
     scan_hits = scan_for_forbidden_text(base)
     add(
@@ -140,8 +247,23 @@ def iter_scan_files(base: Path):
         if root.is_file():
             yield root
             continue
-        for glob in SCAN_GLOBS:
-            yield from root.rglob(glob)
+        for path in root.rglob("*"):
+            if should_skip_path(base, path):
+                continue
+            if path.is_file() and is_scan_candidate(path):
+                yield path
+
+
+def should_skip_path(base: Path, path: Path) -> bool:
+    try:
+        parts = path.relative_to(base).parts
+    except ValueError:
+        return True
+    return any(part in SKIP_DIR_NAMES for part in parts)
+
+
+def is_scan_candidate(path: Path) -> bool:
+    return path.name == ".gitignore" or path.suffix.lower() in SCAN_SUFFIXES
 
 
 def validate_json_files(base: Path) -> list[dict[str, Any]]:
@@ -204,3 +326,101 @@ def validate_issue_examples(base: Path) -> list[dict[str, Any]]:
             }
         )
     return results
+
+
+def find_disallowed_release_paths(base: Path) -> list[dict[str, Any]]:
+    tracked = list_git_tracked_files(base)
+    paths = tracked if tracked else list_release_tree_files(base)
+    hits: list[dict[str, Any]] = []
+    source = "git" if tracked else "filesystem"
+    for rel in paths:
+        normalized = rel.replace("\\", "/")
+        parts = PurePosixPath(normalized).parts
+        if any(part in DISALLOWED_RELEASE_PARTS for part in parts):
+            hits.append({"path": normalized, "source": source, "reason": "generated cache path"})
+            continue
+        if any(normalized == prefix.rstrip("/") or normalized.startswith(prefix) for prefix in DISALLOWED_RELEASE_PREFIXES):
+            hits.append({"path": normalized, "source": source, "reason": "private or generated path prefix"})
+            continue
+        name = parts[-1] if parts else normalized
+        if any(part.endswith(DISALLOWED_RELEASE_SUFFIXES) for part in parts):
+            hits.append({"path": normalized, "source": source, "reason": "generated package metadata"})
+            continue
+        if name in DISALLOWED_RELEASE_NAMES or name.startswith(".env."):
+            hits.append({"path": normalized, "source": source, "reason": "private or generated filename"})
+    return hits
+
+
+def list_git_tracked_files(base: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(base), "ls-files"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def list_release_tree_files(base: Path) -> list[str]:
+    paths: list[str] = []
+    for path in base.rglob("*"):
+        if should_skip_path(base, path):
+            continue
+        if path.is_file() or path.is_symlink():
+            paths.append(path.relative_to(base).as_posix())
+    return paths
+
+
+def validate_repo_skill_link(base: Path) -> dict[str, Any]:
+    link = base / ".codex" / "skills" / "runpod-symphony"
+    target = base / "skills" / "runpod-symphony"
+    if not link.exists():
+        return {
+            "ok": False,
+            "message": "missing repo-local skill link at .codex/skills/runpod-symphony",
+            "details": [{"path": ".codex/skills/runpod-symphony", "error": "missing"}],
+        }
+    if link.resolve() != target.resolve():
+        return {
+            "ok": False,
+            "message": ".codex skill link resolves to the wrong target",
+            "details": [
+                {
+                    "path": ".codex/skills/runpod-symphony",
+                    "resolved": str(link.resolve()),
+                    "expected": str(target.resolve()),
+                }
+            ],
+        }
+    return {"ok": True, "message": ".codex skill link resolves to skills/runpod-symphony"}
+
+
+def validate_template_sync(base: Path) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+    for source_rel, skill_rel in TEMPLATE_PAIRS:
+        source = base / source_rel
+        skill = base / skill_rel
+        if not source.is_file() or not skill.is_file():
+            failures.append({"source": source_rel, "skill": skill_rel, "error": "missing template"})
+            continue
+        if source.read_bytes() != skill.read_bytes():
+            failures.append({"source": source_rel, "skill": skill_rel, "error": "content differs"})
+    return failures
+
+
+def validate_readme_sections(base: Path) -> list[dict[str, Any]]:
+    readme = base / "README.md"
+    if not readme.is_file():
+        return [{"path": "README.md", "error": "missing"}]
+    text = readme.read_text()
+    return [
+        {"path": "README.md", "heading": heading, "error": "missing heading"}
+        for heading in README_REQUIRED_HEADINGS
+        if heading not in text
+    ]

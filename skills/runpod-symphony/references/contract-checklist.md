@@ -70,6 +70,7 @@ Remote launch is blocked unless all are true:
 - The exact RunPod create request has been reviewed before `--execute`.
 - Manifest and Linear text do not contain literal secrets or private data.
 - A tiny real smoke has already exercised the same route, provider, artifact retrieval, and closeout path before large or huge launch.
+- Long, expensive, large, or huge runs have a live productivity channel: sanitized `/healthz`, SSH/log tail, or another fetchable status/heartbeat packet. Provider state, runtime metrics, billing, and completion-only artifact inspection do not satisfy this gate.
 
 ## Secret And Data Screening
 
