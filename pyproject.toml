@@ -5,22 +5,51 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "symphony-runpod-bridge"
 version = "0.1.0"
-description = "Local-first RunPod execution bridge for Symphony and Linear"
+description = "RunPod guardrails for OpenAI Symphony and Linear AI-agent workflows"
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
-keywords = ["runpod", "symphony", "linear", "codex", "automation"]
+keywords = [
+  "runpod",
+  "runpodctl",
+  "symphony",
+  "openai-symphony",
+  "linear",
+  "codex",
+  "openai-codex",
+  "ai-agents",
+  "agent-orchestration",
+  "remote-execution",
+  "gpu-computing",
+  "cloud-gpu",
+  "workflow-automation",
+  "launch-manifests",
+  "artifact-proof",
+  "cost-control",
+  "cleanup",
+  "python-cli",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Utilities",
 ]
+
+[project.urls]
+Homepage = "https://github.com/jvogan/runpod-bridge"
+Repository = "https://github.com/jvogan/runpod-bridge"
+Documentation = "https://github.com/jvogan/runpod-bridge#readme"
+Issues = "https://github.com/jvogan/runpod-bridge/issues"
 
 [project.scripts]
 runpod-bridge = "runpod_bridge.cli:main"

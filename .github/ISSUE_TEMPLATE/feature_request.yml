@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose a public-safe bridge capability, adapter, or workflow improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Keep examples synthetic or public. Do not include credentials, private Linear text, private pod IDs, unpublished datasets, or raw generated packets.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What RunPod, Symphony, Linear, or AI-agent workflow problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the contract, command, adapter, check, or doc change.
+    validations:
+      required: true
+  - type: dropdown
+    id: fit
+    attributes:
+      label: Fit
+      options:
+        - RunPod pod runner
+        - RunPod Serverless or Flash watchlist
+        - Linear issue intake or closeout
+        - Symphony worker handoff
+        - artifact egress or hashing
+        - cost and cleanup guardrails
+        - public docs or examples
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation idea
+      description: How should the bridge prove this works without requiring private data?

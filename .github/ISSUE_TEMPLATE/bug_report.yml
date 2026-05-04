@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a RunPod Bridge bug without secrets or private run data.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, pod IDs from private runs, private repo names, customer records, unpublished data, presigned URLs, or raw private logs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - manifest validation
+        - local dry-run
+        - provider handoff
+        - RunPod create or cleanup guard
+        - monitoring or productivity proof
+        - artifact closeout
+        - Linear issue workflow
+        - docs or examples
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Paste the sanitized command you ran.
+      render: bash
+  - type: textarea
+    id: output
+    attributes:
+      label: Sanitized output
+      description: Paste only public-safe output with secrets and private identifiers removed.
+      render: text
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, private data, private run identifiers, and generated run packets.
+          required: true

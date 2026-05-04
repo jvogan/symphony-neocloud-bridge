@@ -2,11 +2,17 @@
 
 ## Name
 
-Symphony RunPod Bridge
+RunPod Bridge for Symphony + Linear
 
 ## Purpose
 
-Provide a reusable, contract-driven RunPod lane for Symphony + Linear campaigns.
+Provide a reusable, contract-driven RunPod lane for OpenAI Symphony-style agent orchestration and Linear issue workflows.
+
+## Audience
+
+- RunPod users who want guarded remote jobs rather than ad hoc pod starts.
+- OpenAI Symphony-style orchestrators that dispatch Codex workers from Linear issues.
+- AI agents that need manifests, dry-runs, provider handoffs, artifact proof, cleanup, and parseable closeout records.
 
 ## User Story
 

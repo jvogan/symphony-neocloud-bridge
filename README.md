@@ -1,12 +1,12 @@
-# Symphony RunPod Bridge
+# RunPod Bridge for Symphony + Linear
 
-Local-first guardrails for running agent-declared workloads on RunPod.
+Local-first guardrails for AI agents running declared workloads on RunPod.
 
-This project helps AI-agent workflows turn a reviewed workload contract into a remote RunPod execution with preflight checks, artifact proof, cost records, and cleanup. It is designed for Symphony + Linear setups, but the core CLI is just a standard-library Python tool that can validate manifests, render startup scripts, prepare handoff packets, run local dry-runs, and guard paid RunPod pod creation.
+This project helps AI-agent workflows turn a reviewed workload contract into a remote RunPod execution with preflight checks, artifact proof, cost records, and cleanup. It is designed for OpenAI Symphony-style orchestration with Linear as the work ledger, but the core CLI is just a standard-library Python tool that can validate manifests, render startup scripts, prepare handoff packets, run local dry-runs, and guard paid RunPod pod creation.
 
 ![RunPod Bridge social preview](assets/social-preview/runpod-bridge-social-preview-01.png)
 
-It is not a domain-science framework and it is not a general RunPod SDK. Domain repos provide commands, validation checks, and expected artifacts; this bridge owns the remote execution mechanics and blocks false success.
+It is not a domain-science framework and it is not a general RunPod SDK. Domain repos provide commands, validation checks, and expected artifacts; this bridge owns the remote execution mechanics and blocks false success. This is an independent public bridge and is not an official RunPod, Linear, or OpenAI project.
 
 ## What It Does
 
@@ -23,6 +23,33 @@ It is not a domain-science framework and it is not a general RunPod SDK. Domain 
 Use this bridge when an AI agent or orchestrator needs to run a declared batch workload on RunPod and you need a clear audit trail. It is useful for engineering jobs, model evaluation, dataset preprocessing, report generation, and other workloads that can define commands, validation checks, and artifacts.
 
 Do not use it to bypass RunPod authorization, run long-lived public services, store credentials in manifests, or claim scientific/model success without separate domain validation.
+
+## Best Fit
+
+- RunPod users who want safer pod-based GPU or CPU jobs with cost caps, cleanup proof, and artifact hashes.
+- OpenAI Symphony-style multi-agent systems that dispatch Codex workers from Linear issues.
+- Teams turning Linear tickets into remote batch workloads that need preflight checks and closeout records.
+- AI agents that must prove what ran, where it ran, what it produced, what it cost, and whether the resource was cleaned up.
+- Public demos that need local dry-runs without requiring a RunPod API key.
+
+## Symphony Ecosystem
+
+This repo is intended to be the RunPod execution lane for teams adopting the public OpenAI Symphony pattern:
+
+- [openai/symphony](https://github.com/openai/symphony): the upstream Symphony repo and service specification for Linear-driven autonomous implementation runs.
+- [OpenAI Symphony article](https://openai.com/index/open-source-codex-orchestration-symphony/): background on using Linear as the control plane for coding agents.
+- [jvogan/symphony-linear-starter](https://github.com/jvogan/symphony-linear-starter): public starter toolkit for Symphony + Linear operator workflows.
+- [jvogan/symphony-claude-lane](https://github.com/jvogan/symphony-claude-lane): public companion lane for adding Claude Code to Symphony + Linear workflows.
+
+The bridge stays useful outside that stack, but its sharpest path is: Linear issue -> Symphony worker -> guarded RunPod workload -> artifact/cost/cleanup proof -> `symphony-outcome`.
+
+## Agent Prompts This Handles
+
+- "Validate this RunPod launch manifest before a paid run."
+- "Turn this Linear issue into a provider handoff packet."
+- "Run this workload on RunPod only if budget, artifact, validation, and cleanup gates pass."
+- "Monitor a RunPod job and separate provider state from workload progress."
+- "Close out a Symphony run with artifact hashes, cost records, and cleanup status."
 
 ## Flow
 
