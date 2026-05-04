@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "run_id": "replace-with-run-id",
+  "compute_profile": "runpod-pod-smoke",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "workload": {
+    "scale": "small",
+    "description": "replace-with-workload-description",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "replace-with-real-input-ledger-or-file"
+      ],
+      "exact_commands": [
+        "replace-with-exact-workload-command",
+        "replace-with-artifact-validation-command"
+      ],
+      "expected_outputs": [
+        "replace-with-artifact-path"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "replace-with-artifact-path"
+      ],
+      "timeout_minutes": 240,
+      "resume_policy": "replace-with-rerun-or-checkpoint-policy",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "replace-with-input-materialization-check"
+        ],
+        "tool_invocation": [
+          "replace-with-exact-tool-invocation-proof"
+        ],
+        "artifact_validation": [
+          "replace-with-artifact-validation-command"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only unless domain validation upgrades the claim"
+        ]
+      },
+      "real_smoke": {
+        "manifest": "",
+        "same_route": false,
+        "artifact_verified": false
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "launch_authorization": {
+    "source": "replace-before-launch",
+    "approved_by": "replace-before-launch",
+    "approved_at": "replace-before-launch",
+    "linear_issue_url": ""
+  },
+  "budget": {
+    "max_runtime_minutes": 240,
+    "terminate_after_minutes": 270,
+    "max_estimated_cost_usd": 25
+  },
+  "repo": {
+    "source": "git_remote_or_snapshot",
+    "url_or_path": "replace-with-repo",
+    "commit_or_snapshot": "replace-before-launch",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "replace-with-pod-name",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 20,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [],
+    "env": {}
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "progress": {
+      "http_status_server_port": 0,
+      "auth_token_ref": "",
+      "include_log_tail": false,
+      "log_tail_bytes": 4096
+    },
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/logs runpod-execution/artifacts",
+      "replace-with-workload-command",
+      "replace-with-validation-command"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 10,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId",
+      "machine.gpuTypeId",
+      "publicIp",
+      "portMappings",
+      "networkVolume.id"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "replace-with-domain-validation-command"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "contract_self_check",
+      "path": "replace-with-artifact-path",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "workspace_archive",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "destination_uri_ref": "",
+    "archive_upload_url_ref": "",
+    "hash_upload_url_ref": "",
+    "credentials_ref": "",
+    "s3_endpoint_url_ref": "",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": false,
+    "requires_presigned_upload": false
+  },
+  "aws": {
+    "region_ref": "env:AWS_REGION",
+    "artifact_role_arn_ref": "",
+    "artifact_session_policy_ref": "",
+    "sqs": {
+      "queue_url_ref": "",
+      "fifo": false,
+      "visibility_timeout_seconds": 300
+    },
+    "dynamodb": {
+      "lock_table_ref": "",
+      "ttl_seconds": 3600
+    },
+    "eventbridge_cleanup": {
+      "enabled": false,
+      "role_arn_ref": "",
+      "target_arn_ref": "",
+      "dead_letter_queue_arn_ref": "",
+      "group_name_ref": "",
+      "cleanup_action": "delete"
+    },
+    "ecr": {
+      "registry_uri": "",
+      "region_ref": "",
+      "runpod_registry_auth_name": ""
+    }
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-replace-with-issue-id"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

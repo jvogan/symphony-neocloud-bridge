@@ -1,0 +1,4 @@
+interface:
+  display_name: "RunPod Symphony"
+  short_description: "RunPod lane checks for Symphony"
+  default_prompt: "Use $runpod-symphony to validate a Linear-backed RunPod manifest with local dry-run first; require remote_launch_allowed before any paid launch."

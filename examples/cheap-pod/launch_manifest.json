@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "cheap-pod-dryrun",
+  "compute_profile": "cheap-cpu-pod-dryrun",
+  "workload": {
+    "scale": "small",
+    "description": "Cheap CPU-only RunPod dry-run contract",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline startup command"
+      ],
+      "exact_commands": [
+        "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/cheap-pod-result.json').write_text('{\"ok\": true, \"mode\": \"cheap-pod-dryrun\"}\\n')\nPY",
+        "python3 -m json.tool runpod-execution/artifacts/cheap-pod-result.json >/dev/null"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/cheap-pod-result.json"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/cheap-pod-result.json"
+      ],
+      "timeout_minutes": 10,
+      "resume_policy": "rerun from scratch; no checkpoint state",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "repo checkout or local run directory exists before startup command runs"
+        ],
+        "tool_invocation": [
+          "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/cheap-pod-result.json').write_text('{\"ok\": true, \"mode\": \"cheap-pod-dryrun\"}\\n')\nPY"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool runpod-execution/artifacts/cheap-pod-result.json >/dev/null"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; no domain interpretation claim"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 10,
+    "terminate_after_minutes": 15,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "git_remote_or_snapshot",
+    "url_or_path": "https://example.invalid/cheap-pod-workload.git",
+    "commit_or_snapshot": "dryrun-snapshot",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "symphony-cheap-pod-dryrun",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 10,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [],
+    "env": {
+      "SYMPHONY_RUN_ID": "cheap-pod-dryrun"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/artifacts",
+      "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/cheap-pod-result.json').write_text('{\"ok\": true, \"mode\": \"cheap-pod-dryrun\"}\\n')\nPY"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool runpod-execution/artifacts/cheap-pod-result.json >/dev/null"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "cheap_pod_result",
+      "path": "runpod-execution/artifacts/cheap-pod-result.json",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "workspace_archive",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": false
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-cheap-pod-dryrun"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

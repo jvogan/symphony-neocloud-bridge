@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "proxy-matrix-smoke",
+  "compute_profile": "cheap-cpu-proxy-matrix-smoke",
+  "workload": {
+    "scale": "small",
+    "description": "CPU-only multi-artifact matrix smoke with HTTP proxy and direct TCP verification",
+    "shards": [
+      {"shard_id": "shard-00"},
+      {"shard_id": "shard-01"},
+      {"shard_id": "shard-02"},
+      {"shard_id": "shard-03"}
+    ],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline matrix generator"
+      ],
+      "exact_commands": [
+        "startup.commands[3] inline Python matrix writer",
+        "python3 -m json.tool runpod-execution/artifacts/matrix-summary.json >/dev/null",
+        "validation_commands[1] inline Python artifact assertions"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/matrix-summary.json",
+        "runpod-execution/artifacts/matrix-report.md",
+        "runpod-execution/artifacts/linear-closeout.md",
+        "runpod-execution/artifacts/shards/shard-00.json",
+        "runpod-execution/artifacts/shards/shard-01.json",
+        "runpod-execution/artifacts/shards/shard-02.json",
+        "runpod-execution/artifacts/shards/shard-03.json"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/matrix-summary.json",
+        "runpod-execution/artifacts/linear-closeout.md"
+      ],
+      "timeout_minutes": 10,
+      "resume_policy": "rerun from scratch; no checkpoint state",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "repo.source=inline_commands; startup generates all shard inputs in memory"
+        ],
+        "tool_invocation": [
+          "startup.commands[3] inline Python matrix writer"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool runpod-execution/artifacts/matrix-summary.json >/dev/null",
+          "validation_commands[1] inline Python artifact assertions over runpod-execution/artifacts"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; matrix smoke artifacts are sanitized and not domain evidence"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "launch_authorization": {
+    "source": "",
+    "approved_by": "",
+    "approved_at": "",
+    "linear_issue_url": ""
+  },
+  "budget": {
+    "max_runtime_minutes": 10,
+    "terminate_after_minutes": 15,
+    "max_estimated_cost_usd": 2
+  },
+  "repo": {
+    "source": "inline_commands",
+    "url_or_path": "inline",
+    "commit_or_snapshot": "inline:proxy-matrix-smoke-v1",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "symphony-proxy-matrix-smoke",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 10,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [
+      "8000/http",
+      "8000/tcp"
+    ],
+    "env": {
+      "SYMPHONY_RUN_ID": "proxy-matrix-smoke"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": true,
+    "tcp_ports_required": true,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": false
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "inspection": {
+      "hold_after_success_seconds": 180,
+      "http_artifact_server_port": 8000
+    },
+    "progress": {
+      "http_status_server_port": 8000,
+      "auth_token_ref": "",
+      "include_log_tail": false,
+      "log_tail_bytes": 4096
+    },
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/artifacts/shards",
+      "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nbase = Path('runpod-execution/artifacts')\nrows = []\nfor shard in range(4):\n    values = [(shard + 1) * (index + 2) for index in range(6)]\n    record = {\n        'shard_id': f'shard-{shard:02d}',\n        'values': values,\n        'sum': sum(values),\n        'max': max(values),\n        'status': 'succeeded'\n    }\n    rows.append(record)\n    (base / 'shards' / f'shard-{shard:02d}.json').write_text(json.dumps(record, sort_keys=True) + '\\n')\nsummary = {\n    'ok': True,\n    'mode': 'proxy-matrix-smoke',\n    'shard_count': len(rows),\n    'total': sum(row['sum'] for row in rows),\n    'max_value': max(row['max'] for row in rows),\n    'linear_issue_key': 'LOCAL-RUNPOD-MATRIX',\n    'artifacts': [f'shards/shard-{i:02d}.json' for i in range(4)]\n}\n(base / 'matrix-summary.json').write_text(json.dumps(summary, indent=2, sort_keys=True) + '\\n')\n(base / 'matrix-report.md').write_text('# Matrix Smoke Report\\n\\n- shards: 4\\n- total: %s\\n- claim: artifact execution only\\n' % summary['total'])\n(base / 'linear-closeout.md').write_text('<!-- symphony-outcome\\nstatus: succeeded\\nlinear_issue_key: LOCAL-RUNPOD-MATRIX\\nclaim_level: artifact_execution_only\\n-->\\n')\nPY"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId",
+      "portMappings"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool runpod-execution/artifacts/matrix-summary.json >/dev/null",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nbase = Path('runpod-execution/artifacts')\nsummary = json.loads((base / 'matrix-summary.json').read_text())\nassert summary['ok'] is True\nassert summary['shard_count'] == 4\nassert summary['total'] == 270\nfor index in range(4):\n    shard = json.loads((base / 'shards' / f'shard-{index:02d}.json').read_text())\n    assert shard['status'] == 'succeeded'\nassert (base / 'matrix-report.md').read_text().startswith('# Matrix Smoke Report')\nassert 'symphony-outcome' in (base / 'linear-closeout.md').read_text()\nPY"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "matrix_summary",
+      "path": "runpod-execution/artifacts/matrix-summary.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "matrix_report",
+      "path": "runpod-execution/artifacts/matrix-report.md",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "linear_closeout",
+      "path": "runpod-execution/artifacts/linear-closeout.md",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "shard_00",
+      "path": "runpod-execution/artifacts/shards/shard-00.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "shard_01",
+      "path": "runpod-execution/artifacts/shards/shard-01.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "shard_02",
+      "path": "runpod-execution/artifacts/shards/shard-02.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "shard_03",
+      "path": "runpod-execution/artifacts/shards/shard-03.json",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "workspace_archive",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": false
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-proxy-matrix-smoke"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

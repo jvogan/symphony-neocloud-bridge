@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "aws-orchestrated-demo",
+  "compute_profile": "cheap-cpu-pod-dryrun",
+  "workload": {
+    "scale": "small",
+    "description": "Small RunPod workload with AWS-side orchestration controls",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline startup command"
+      ],
+      "exact_commands": [
+        "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/aws-orchestrated-result.json').write_text('{\"ok\": true, \"mode\": \"aws-orchestrated-demo\"}\\n')\nPY",
+        "python3 -m json.tool runpod-execution/artifacts/aws-orchestrated-result.json >/dev/null"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/aws-orchestrated-result.json",
+        "runpod-execution/artifacts/runpod-execution.tar.gz"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/aws-orchestrated-result.json"
+      ],
+      "timeout_minutes": 10,
+      "resume_policy": "rerun from scratch; no checkpoint state",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "repo checkout or local run directory exists before startup command runs"
+        ],
+        "tool_invocation": [
+          "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/aws-orchestrated-result.json').write_text('{\"ok\": true, \"mode\": \"aws-orchestrated-demo\"}\\n')\nPY"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool runpod-execution/artifacts/aws-orchestrated-result.json >/dev/null"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; AWS control-plane success is not domain success"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 10,
+    "terminate_after_minutes": 15,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "git_remote_or_snapshot",
+    "url_or_path": "https://example.invalid/aws-orchestrated-workload.git",
+    "commit_or_snapshot": "dryrun-snapshot",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "123456789012.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha256-demo",
+    "templateId": "",
+    "name": "symphony-aws-orchestrated-demo",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 10,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [],
+    "env": {
+      "RUNTIME_SECRET_REF": "aws-sm:runpod/public-demo/runtime-token",
+      "SYMPHONY_RUN_ID": "aws-orchestrated-demo"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/artifacts",
+      "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/aws-orchestrated-result.json').write_text('{\"ok\": true, \"mode\": \"aws-orchestrated-demo\"}\\n')\nPY"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool runpod-execution/artifacts/aws-orchestrated-result.json >/dev/null"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "aws_orchestrated_result",
+      "path": "runpod-execution/artifacts/aws-orchestrated-result.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "archive",
+      "path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "object_store_upload",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "destination_uri": "s3://runpod-bridge-demo-artifacts/runs/aws-orchestrated-demo",
+    "destination_uri_ref": "",
+    "credentials_ref": "aws-sts:arn:aws:iam::123456789012:role/runpod-bridge-artifact-upload",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": true
+  },
+  "aws": {
+    "region_ref": "env:AWS_REGION",
+    "sqs": {
+      "queue_url_ref": "env:RUNPOD_BRIDGE_SQS_QUEUE_URL",
+      "fifo": false,
+      "visibility_timeout_seconds": 600
+    },
+    "dynamodb": {
+      "lock_table_ref": "env:RUNPOD_BRIDGE_LOCK_TABLE",
+      "ttl_seconds": 900
+    },
+    "eventbridge_cleanup": {
+      "enabled": true,
+      "role_arn_ref": "env:RUNPOD_BRIDGE_SCHEDULER_ROLE_ARN",
+      "target_arn_ref": "env:RUNPOD_BRIDGE_CLEANUP_TARGET_ARN",
+      "dead_letter_queue_arn_ref": "env:RUNPOD_BRIDGE_CLEANUP_DLQ_ARN",
+      "cleanup_action": "delete"
+    },
+    "ecr": {
+      "runpod_registry_auth_name": "runpod-ecr-aws-orchestrated-demo"
+    }
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-aws-orchestrated-demo"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}
