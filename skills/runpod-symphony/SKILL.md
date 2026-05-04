@@ -5,7 +5,7 @@ description: Use for Symphony + Linear RunPod work: launch manifests, provider h
 
 # RunPod Symphony
 
-Use this skill to run repo-defined workloads on RunPod with Symphony as the dispatcher and Linear as the work ledger. Own the remote execution mechanics; leave domain science, model interpretation, and workload-specific success criteria in the domain repo.
+Use this skill to run repo-defined workloads on RunPod with Symphony as the dispatcher and Linear as the work ledger. It works for Codex workers, Claude Code workers, and mixed-agent Symphony lanes because the contract is a launch manifest plus the `runpod-bridge` CLI. Own the remote execution mechanics; leave domain science, model interpretation, and workload-specific success criteria in the domain repo.
 
 ## When To Use
 
@@ -64,7 +64,7 @@ Use this skill to run repo-defined workloads on RunPod with Symphony as the disp
 - Prefer `runpod-bridge` on `PATH`; in a source checkout, use `bin/runpod-bridge`.
 - Happy path: `validate-manifest` -> `contract-self-check` -> `prepare` -> `validate-handoff` -> `run-handoff` or `run-remote` -> `closeout`.
 - For mutating runs, keep the default local launch lock enabled. Set `RUNPOD_BRIDGE_LOCK_DIR` or pass `--lock-dir` when multiple Symphony orchestrators should coordinate through a shared lock path.
-- In Symphony/Codex worker sandboxes, do not assume shell networking works. Run a cheap `runpod-bridge list-pods --name-prefix <expected-prefix> --json` preflight before remote mutation. If DNS/TCP fails, have the worker stop at a prepared launch packet, validate `provider_handoff.json`, and hand off `run-handoff` plus Linear closeout to an unsandboxed orchestrator or trusted `after_run` hook.
+- In Symphony Codex or Claude Code worker sandboxes, do not assume shell networking works. Run a cheap `runpod-bridge list-pods --name-prefix <expected-prefix> --json` preflight before remote mutation. If DNS/TCP fails, have the worker stop at a prepared launch packet, validate `provider_handoff.json`, and hand off `run-handoff` plus Linear closeout to an unsandboxed orchestrator or trusted `after_run` hook.
 - Use only one mutating worker per RunPod run. Monitoring workers must stay read-only and report through Linear or local status files.
 - Use Linear tools only for issue intake, status updates, and outcome comments requested by the user or workflow.
 - If command execution or log streaming inside the pod is unavailable, use startup-command execution for V1 and state the limitation in the outcome.
@@ -99,7 +99,7 @@ Read `references/runpod-operations.md` when a task involves enabling RunPod acce
 
 Read `references/cli-reference.md` when you need the full command inventory.
 
-Read `references/worker-readiness.md` before assigning RunPod work to Symphony/Codex workers, especially when deciding whether a worker can mutate cloud resources or should produce a handoff packet only.
+Read `references/worker-readiness.md` before assigning RunPod work to Symphony Codex or Claude Code workers, especially when deciding whether a worker can mutate cloud resources or should produce a handoff packet only.
 
 Read `references/failure-playbook.md` when pod create, boot, proxy, runtime metrics, git bootstrap, GPU scheduling, or artifact fetch behavior is ambiguous.
 

@@ -1,6 +1,6 @@
 # RunPod Worker Readiness
 
-Use this before assigning RunPod work to Symphony or Codex workers.
+Use this before assigning RunPod work to Symphony Codex, Claude Code, or mixed-agent workers.
 
 ## Required Discovery
 

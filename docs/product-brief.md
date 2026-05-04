@@ -11,12 +11,12 @@ Provide a reusable, contract-driven RunPod lane for OpenAI Symphony-style agent 
 ## Audience
 
 - RunPod users who want guarded remote jobs rather than ad hoc pod starts.
-- OpenAI Symphony-style orchestrators that dispatch Codex workers from Linear issues.
+- OpenAI Symphony-style orchestrators that dispatch Codex, Claude Code, or mixed-agent workers from Linear issues.
 - AI agents that need manifests, dry-runs, provider handoffs, artifact proof, cleanup, and parseable closeout records.
 
 ## User Story
 
-An operator has a Linear issue that says a workload should run on RunPod. A Symphony Codex worker validates the local contract, starts or creates the pod only when authorized, runs the startup workload, captures proof artifacts, stops/deletes resources, and writes a parseable outcome block.
+An operator has a Linear issue that says a workload should run on RunPod. A Symphony Codex or Claude Code worker validates the local contract, starts or creates the pod only when authorized, runs the startup workload, captures proof artifacts, stops/deletes resources, and writes a parseable outcome block.
 
 ## Product Unit
 

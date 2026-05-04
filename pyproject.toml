@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "symphony-runpod-bridge"
 version = "0.1.0"
-description = "RunPod guardrails for OpenAI Symphony and Linear AI-agent workflows"
+description = "RunPod guardrails for OpenAI Symphony, Linear, Codex, and Claude Code workflows"
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,6 +17,8 @@ keywords = [
   "linear",
   "codex",
   "openai-codex",
+  "claude-code",
+  "symphony-claude-lane",
   "ai-agents",
   "agent-orchestration",
   "remote-execution",

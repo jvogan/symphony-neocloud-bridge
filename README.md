@@ -2,7 +2,7 @@
 
 Local-first guardrails for AI agents running declared workloads on RunPod.
 
-This project helps AI-agent workflows turn a reviewed workload contract into a remote RunPod execution with preflight checks, artifact proof, cost records, and cleanup. It is designed for OpenAI Symphony-style orchestration with Linear as the work ledger, but the core CLI is just a standard-library Python tool that can validate manifests, render startup scripts, prepare handoff packets, run local dry-runs, and guard paid RunPod pod creation.
+This project helps AI-agent workflows turn a reviewed workload contract into a remote RunPod execution with preflight checks, artifact proof, cost records, and cleanup. It is designed for OpenAI Symphony-style orchestration with Linear as the work ledger, and works with Codex workers, Claude Code workers, and mixed-agent Symphony lanes. The core CLI is just a standard-library Python tool that can validate manifests, render startup scripts, prepare handoff packets, run local dry-runs, and guard paid RunPod pod creation.
 
 ![RunPod Bridge social preview](assets/social-preview/runpod-bridge-social-preview-01.png)
 
@@ -27,7 +27,7 @@ Do not use it to bypass RunPod authorization, run long-lived public services, st
 ## Best Fit
 
 - RunPod users who want safer pod-based GPU or CPU jobs with cost caps, cleanup proof, and artifact hashes.
-- OpenAI Symphony-style multi-agent systems that dispatch Codex workers from Linear issues.
+- OpenAI Symphony-style multi-agent systems that dispatch Codex or Claude Code workers from Linear issues.
 - Teams turning Linear tickets into remote batch workloads that need preflight checks and closeout records.
 - AI agents that must prove what ran, where it ran, what it produced, what it cost, and whether the resource was cleaned up.
 - Public demos that need local dry-runs without requiring a RunPod API key.
@@ -39,9 +39,11 @@ This repo is intended to be the RunPod execution lane for teams adopting the pub
 - [openai/symphony](https://github.com/openai/symphony): the upstream Symphony repo and service specification for Linear-driven autonomous implementation runs.
 - [OpenAI Symphony article](https://openai.com/index/open-source-codex-orchestration-symphony/): background on using Linear as the control plane for coding agents.
 - [jvogan/symphony-linear-starter](https://github.com/jvogan/symphony-linear-starter): public starter toolkit for Symphony + Linear operator workflows.
-- [jvogan/symphony-claude-lane](https://github.com/jvogan/symphony-claude-lane): public companion lane for adding Claude Code to Symphony + Linear workflows.
+- [jvogan/symphony-claude-lane](https://github.com/jvogan/symphony-claude-lane): public companion lane for adding Claude Code workers to Symphony + Linear workflows.
 
-The bridge stays useful outside that stack, but its sharpest path is: Linear issue -> Symphony worker -> guarded RunPod workload -> artifact/cost/cleanup proof -> `symphony-outcome`.
+The bridge stays useful outside that stack, but its sharpest path is: Linear issue -> Symphony Codex or Claude Code worker -> guarded RunPod workload -> artifact/cost/cleanup proof -> `symphony-outcome`.
+
+The bridge is agent-runtime agnostic. A Claude Code lane can use the same launch manifest and `runpod-bridge` CLI as a Codex lane. If a worker sandbox cannot reach RunPod directly, it can stop at `provider_handoff.json` and let a trusted orchestrator run `run-handoff`.
 
 ## Agent Prompts This Handles
 
@@ -55,7 +57,7 @@ The bridge stays useful outside that stack, but its sharpest path is: Linear iss
 
 ```text
 Linear issue
-  -> Symphony Codex worker
+  -> Symphony Codex or Claude Code worker
   -> local preflight
   -> RunPod launch or start
   -> startup workload
@@ -81,7 +83,7 @@ bin/runpod-bridge run-local examples/cheap-pod/launch_manifest.json \
   --runtime-dir .runtime/cheap-pod-run
 ```
 
-For an agent-facing workflow, install or link the skill at `skills/runpod-symphony/` into the relevant Codex skill home, then run:
+For an agent-facing workflow, install or link the skill at `skills/runpod-symphony/` into the relevant Codex or Claude Code lane environment, then run:
 
 ```bash
 bin/runpod-bridge doctor
@@ -181,7 +183,7 @@ bin/runpod-bridge supervise examples/small-cpu/launch_manifest.json --base-dir .
 
 Remote creation is guarded. `create-pod` writes an audited request/resource record without touching RunPod by default, and actual creation requires `remote_launch_allowed: true`, explicit `launch_authorization`, an immutable repo reference, a passing `contract-self-check` with route proof, `RUNPOD_API_KEY`, no active duplicate pod prefix, `--execute`, and `--yes-create-paid-runpod`. The mutating `run-remote` and `run-handoff` flows also take an atomic local launch lock before pod creation; set `RUNPOD_BRIDGE_LOCK_DIR` or `--lock-dir` if several orchestrators should share one lock directory.
 
-For Symphony/Codex workers, first prove the worker shell can reach RunPod REST. Some sandboxed worker runtimes have no outbound DNS/TCP even when `RUNPOD_API_KEY` is injected. In that mode, use the worker for `validate-manifest`, `prepare`, and `run-local`. The prepared packet includes `provider_handoff.json`; run that from an unsandboxed orchestrator or trusted `after_run` hook with `run-handoff`.
+For Symphony Codex or Claude Code workers, first prove the worker shell can reach RunPod REST. Some sandboxed worker runtimes have no outbound DNS/TCP even when `RUNPOD_API_KEY` is injected. In that mode, use the worker for `validate-manifest`, `prepare`, and `run-local`. The prepared packet includes `provider_handoff.json`; run that from an unsandboxed orchestrator or trusted `after_run` hook with `run-handoff`.
 
 For a capped smoke, prefer the single-command remote runner. It creates the pod, verifies declared artifacts, and always attempts cleanup when a pod was created:
 
