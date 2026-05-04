@@ -36,8 +36,8 @@ runpod-bridge validate-handoff runpod-execution/provider_handoff.json
 
 ## Risk Notes
 
-- Do not put API keys, registry credentials, private datasets, or customer process records in Linear or repo files.
-- Pod lifecycle events are not success. Artifact checks define success.
+- Keep API keys, registry credentials, private datasets, and customer process records out of Linear and repo files. Use environment variables or runtime injection references.
+- Artifact checks define success. Pod lifecycle events alone do not close a run.
 
 <!-- symphony:schema
 schema_version: 1

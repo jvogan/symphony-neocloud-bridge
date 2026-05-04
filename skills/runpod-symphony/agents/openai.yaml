@@ -1,4 +1,4 @@
 interface:
   display_name: "RunPod Symphony"
-  short_description: "RunPod lane checks for Symphony"
-  default_prompt: "Use $runpod-symphony for Linear-backed RunPod work: local dry-run first; require remote_launch_allowed, live productivity proof for nontrivial runs, artifact validation, and cleanup before success."
+  short_description: "Guardrails for RunPod workloads dispatched from Linear"
+  default_prompt: "Use $runpod-symphony for Linear-backed RunPod work. Run local dry-run first. Require remote_launch_allowed, finite budget, immutable source, declared artifacts, a live productivity channel for nontrivial runs, validation commands, and recorded cleanup before closing a run as success."

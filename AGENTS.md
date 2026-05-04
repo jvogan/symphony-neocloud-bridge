@@ -4,51 +4,51 @@ This repo is the planning and implementation workspace for a reusable RunPod exe
 
 ## Mission
 
-Build a domain-agnostic sidecar that lets Symphony workers run repo-defined workloads on RunPod safely and repeatably.
+Build a domain-agnostic sidecar so Symphony workers can run repo-defined workloads on RunPod safely and repeatably.
 
-The bridge should own remote execution mechanics:
+The bridge owns remote execution mechanics:
 
 - compute policy selection
 - launch manifest validation
 - local preflight before paid resources
-- RunPod pod/template/volume lifecycle
+- RunPod pod, template, and volume lifecycle
 - startup command generation
-- log/artifact capture
+- log and artifact capture
 - artifact hash reporting
 - cost and billing closeout
 - recovery and dashboard records
 - cleanup enforcement
 - Linear `symphony-outcome` closeout blocks
 
-It should not own domain science. Domain agents should pass workload contracts into this bridge.
+Domain repos own workload commands, input data policy, expected artifacts, and scientific or analytical interpretation. Domain agents pass workload contracts into this bridge.
 
 ## Operating Rules
 
 - Default to local dry-run validation until the operator explicitly authorizes remote launch.
-- Do not create paid RunPod resources unless the issue/manifest has `remote_launch_allowed: true`, budget/time limits, cleanup policy, and expected artifacts.
-- Never store API keys, tokens, registry credentials, private datasets, unpublished sequences, or raw customer process records in this repo or Linear.
+- Block paid RunPod resource creation unless the issue or manifest declares `remote_launch_allowed: true`, budget and time limits, cleanup policy, and expected artifacts.
+- Keep API keys, tokens, registry credentials, private datasets, unpublished sequences, and raw customer process records out of this repo and Linear. Use environment variables, vault references, or runtime secret injection.
 - Treat pod creation, pod start, command exit, and log presence as insufficient for success. Success requires declared artifact checks.
 - Require `contract-self-check` before paid launch so real inputs, exact commands, route proof, expected outputs, done markers, resume policy, and claim level are explicit.
 - Stop or delete pods at closeout unless retention is explicitly approved and documented.
-- Keep provider-specific logic isolated so provider-neutral cloud/neocloud adapters can reuse the same contract.
+- Keep provider-specific logic isolated so provider-neutral cloud and neocloud adapters can reuse the same contract.
 
-## Key Pattern And Convention Notes
+## Key Conventions
 
 - Use `skills/runpod-symphony/` as the Codex skill source of truth.
 - Use `bin/runpod-bridge` as the stable local CLI wrapper. Symphony workers can use any equivalent wrapper on their `PATH`.
 - Keep reusable manifests under `templates/` and concrete smoke examples under `examples/`.
 - Keep the provider-neutral contract in `provider`, `workload`, `startup`, `monitoring`, `artifact_egress`, `worker_coordination`, and `closeout`.
-- Put RunPod-specific resource fields only under the `runpod` block so other neocloud adapters can reuse the common contract later.
+- Put RunPod-specific resource fields under the `runpod` block so other neocloud adapters can reuse the common contract later.
 - For huge tasks, require checkpoint policy, explicit artifact egress, silence timeout, and cleanup ownership.
-- For cheap/small tasks, prefer CPU-only, no ports, no network volume, short runtime, and a tiny artifact self-check.
+- For cheap or small tasks, prefer CPU-only, no ports, no network volume, short runtime, and a tiny artifact self-check.
 
 ## Risk Areas
 
-- Remote launch is high risk because it can create paid resources. Keep `create-pod` blocked unless launch authorization, budget, immutable source, and explicit execute flags are present.
-- Secret handling is high risk. Do not put literal tokens or credentials in manifests, Linear issues, logs, or examples.
-- Cleanup is high risk. A run is not complete unless stop/delete or approved retention is recorded.
-- Artifact proof is high risk. Do not close as success from pod lifecycle, command submission, or logs alone.
-- Cross-repo discoverability is fragile. Keep normal Codex, Symphony worker `CODEX_HOME`, and repo-local `AGENTS.md` references aligned.
+- **Remote launch**: paid resource creation is high risk. Keep `create-pod` blocked unless launch authorization, budget, immutable source, and explicit execute flags are present.
+- **Secret handling**: literal tokens or credentials in manifests, Linear issues, logs, or examples are unacceptable.
+- **Cleanup**: a run is incomplete unless stop, delete, or approved retention is recorded.
+- **Artifact proof**: pod lifecycle, command submission, and logs alone do not close a run as success.
+- **Cross-repo discoverability**: keep the normal Codex skill home, the Symphony worker `CODEX_HOME`, and repo-local `AGENTS.md` references aligned.
 
 ## Preferred Validation Commands
 
@@ -94,7 +94,7 @@ Start with a local stdlib Python package and CLI:
 - `runpod-bridge contract-self-check`, `preflight`, `egress-plan`, `profiles`, and `provider-capabilities`
 - `runpod-bridge issue-intake`, `orchestrator-scan`, `orchestrator-once`, `supervise`, `dashboard`, `cost-report`, and `recover-run`
 - `runpod-bridge billing-pods`, `billing-endpoints`, and `billing-network-volumes`
-- `runpod-bridge runtime-metrics` for read-only GraphQL container uptime/utilization probes and crash-loop detection
+- `runpod-bridge runtime-metrics` for read-only GraphQL container uptime and utilization probes and crash-loop detection
 - `runpod-bridge render-runpodctl-create` and `pod-ssh-info` when `runpodctl` is installed
 - `runpod-bridge create-pod` only after explicit launch policy passes
 - `runpod-bridge closeout`

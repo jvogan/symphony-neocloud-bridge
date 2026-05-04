@@ -1,6 +1,6 @@
 # RunPod Symphony Contract Checklist
 
-Use this checklist when validating a Linear issue or launch manifest without a dedicated `runpod-bridge` CLI.
+Use this checklist to validate a Linear issue or launch manifest without a dedicated `runpod-bridge` CLI.
 
 ## Required Manifest Fields
 
@@ -27,12 +27,12 @@ Use this checklist when validating a Linear issue or launch manifest without a d
 
 ## Stage Contract Self-Check
 
-Every paid launch must prove the route that will actually run, not only that flags were accepted or packages are installed.
+Every paid launch must prove the route that will actually run. Flag acceptance and package presence are not enough.
 
 Require `workload.stage_contract` with:
 
 - `inputs`: concrete ledgers, manifests, datasets, or files the stage will read.
-- `exact_commands`: the workload commands and artifact validation commands that will run, not only `which`, `--version`, `pip show`, or package-list checks.
+- `exact_commands`: the workload commands and artifact validation commands that will run. `which`, `--version`, `pip show`, and package-list checks do not count.
 - `route_proof.input_materialization`: proof that the real input ledger, manifest, target, index, or dataset materialized before execution.
 - `route_proof.tool_invocation`: proof that the workload route invoked the exact command or tool used for the deliverable.
 - `route_proof.artifact_validation`: proof that validation inspects declared artifact paths or the artifact directory.
@@ -50,9 +50,9 @@ Before asking the user for missing inputs, workers should read the issue body, l
 
 ## Launch Gate
 
-Remote launch is blocked unless all are true:
+Remote launch is blocked unless all of the following are true:
 
-- `remote_launch_allowed: true`
+- `remote_launch_allowed: true`.
 - `launch_authorization` records the operator or Linear source that explicitly authorizes launch.
 - Budget and max runtime are finite and acceptable.
 - Cleanup policy is explicit.
@@ -63,14 +63,14 @@ Remote launch is blocked unless all are true:
 - Validation commands are declared.
 - Exposed ports match the access policy, for example `8000/http` for HTTP proxy inspection or `22/tcp` for full SSH/SCP.
 - Repo source is exact enough to reproduce.
-- Remote git launches use an immutable commit SHA or snapshot/archive digest, not a moving branch.
+- Remote git launches use an immutable commit SHA or snapshot/archive digest. Moving branches are not accepted.
 - Linear issue lock and single mutating worker policy are declared.
 - A local preflight packet has been prepared and reviewed.
 - `provider_handoff.json` has been written and validated before any orchestrator-side paid launch.
 - The exact RunPod create request has been reviewed before `--execute`.
-- Manifest and Linear text do not contain literal secrets or private data.
+- Manifest and Linear text contain no literal secrets or private data.
 - A tiny real smoke has already exercised the same route, provider, artifact retrieval, and closeout path before large or huge launch.
-- Long, expensive, large, or huge runs have a live productivity channel: sanitized `/healthz`, SSH/log tail, or another fetchable status/heartbeat packet. Provider state, runtime metrics, billing, and completion-only artifact inspection do not satisfy this gate.
+- Long, expensive, large, or huge runs have a live productivity channel: sanitized `/healthz`, SSH or log tail, or another fetchable status/heartbeat packet. Provider state, runtime metrics, billing, and completion-only artifact inspection do not satisfy this gate.
 
 ## Secret And Data Screening
 
@@ -81,7 +81,7 @@ Reject manifests, issue text, and logs that contain literal values for:
 - Unpublished sequences or proprietary process parameters
 - Inline `.env` contents
 
-Prefer secure-store names, environment variable names, or runtime injection references instead of literal values.
+Use secure-store names, environment variable names, or runtime injection references in their place.
 
 ## Closeout Requirements
 
@@ -99,6 +99,6 @@ Every closeout must include:
 - monitoring summary with pod state, workload status, last heartbeat, and silence-timeout result
 - parseable `symphony-outcome` block
 
-Treat provider state as intent, not truth. `RUNNING`, pod start, worker exit, and command return code are not enough without workload status, logs, hashes, and declared artifacts.
+Treat provider state as intent. `RUNNING`, pod start, worker exit, and command return code do not close a run without workload status, logs, hashes, and declared artifacts.
 
 Set the claim level to artifact execution only unless the domain repo separately validates scientific or analytical claims.

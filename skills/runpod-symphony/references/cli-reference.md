@@ -48,7 +48,7 @@ Remote mutation requires explicit execute and confirmation flags, for example `-
 
 - `list-pods`: list RunPod pods.
 - `get-pod`: fetch one RunPod pod.
-- `runtime-metrics`: fetch RunPod GraphQL `pod.runtime` uptime/utilization fields and flag likely crash loops from tiny or resetting uptime.
+- `runtime-metrics`: fetch RunPod GraphQL `pod.runtime` uptime and utilization fields and flag likely crash loops from tiny or resetting uptime.
 - `pod-ssh-info`: fetch SSH command details through `runpodctl ssh info`.
 - `billing-pods`: fetch RunPod pod billing records through REST or `--backend runpodctl`.
 - `billing-endpoints`: fetch RunPod Serverless endpoint billing records through REST or `--backend runpodctl`.
@@ -66,7 +66,7 @@ Remote mutation requires explicit execute and confirmation flags, for example `-
 - `fetch-tcp-file`: fetch a file through a direct TCP HTTP service.
 - `verify-tcp-packet`: download and close out an execution packet via direct TCP.
 
-HTTP proxy and direct TCP verification are for sanitized, short-lived smoke artifacts. Use durable egress for private or production artifacts.
+HTTP proxy and direct TCP verification fit short-lived sanitized smoke artifacts. Private or production artifacts use durable egress.
 
 ## Linear API
 
