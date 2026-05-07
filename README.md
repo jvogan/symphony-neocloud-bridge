@@ -16,7 +16,7 @@ Three guardrails do most of the work:
 - **Artifact proof for success.** Pod RUNNING, container exit codes, and log presence do not close a run as success. The run must produce declared artifacts at declared paths, with SHA-256 hashes that pass validation. Forbidden markers like `mock`, `fake`, `dummy`, or workload-specific placeholder names also fail closed.
 - **Secret scrubbing.** Manifests, Linear bodies, repo files, and logs are screened for API keys, registry credentials, private datasets, and unpublished sequences. Secrets live in environment variables or runtime injection references.
 
-Beyond the guardrails, the bridge renders auditable startup scripts and provider handoff packets, runs the same startup contract locally for dry-run validation, and monitors resource state plus workload heartbeats. It hashes declared artifacts, writes a parseable `symphony-outcome` closeout, and audits the public skill assets before publication.
+Beyond the guardrails, the bridge renders auditable startup scripts and provider handoff packets, runs the same startup contract locally for dry-run validation, and monitors resource state plus workload heartbeats. It hashes declared artifacts, writes a parseable `symphony-outcome` closeout, and audits the public skill assets before publication. It also includes a neocloud self-learning runbook so provider hiccups become better checks, examples, and smoke ladders rather than repeated manual lessons.
 
 ## When To Use It
 
@@ -224,6 +224,7 @@ The bridge stays useful outside that stack. The sharpest path runs Linear issue 
 - [docs/architecture.md](docs/architecture.md)
 - [docs/runpod-worker-readiness.md](docs/runpod-worker-readiness.md)
 - [docs/runpod-observability-ladder.md](docs/runpod-observability-ladder.md)
+- [docs/neocloud-self-learning-runbook.md](docs/neocloud-self-learning-runbook.md)
 - [docs/provider-adapter-contract.md](docs/provider-adapter-contract.md)
 - [docs/runpod-official-surfaces.md](docs/runpod-official-surfaces.md)
 - [docs/runpod-superpowers-2026-05.md](docs/runpod-superpowers-2026-05.md)

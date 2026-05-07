@@ -20,6 +20,7 @@ The skill works for Codex workers, Claude Code workers, and mixed-agent Symphony
 - A prompt mentions RunPod-backed Symphony or Linear execution, launch manifests, provider handoffs, remote smoke tests, artifact egress, pod cleanup, cost closeout, or `symphony-outcome`.
 - A worker needs to decide whether it may mutate RunPod resources or should stop at a prepared handoff packet.
 - A run is stuck, ambiguous, or risky and needs provider, runtime, and workload evidence separated before relaunch.
+- A provider or neocloud hiccup should be turned into a reusable public-safe improvement rather than repeated as manual operator lore.
 - A public-release pass needs the skill, examples, templates, and docs scrubbed for generated artifacts, private paths, or organization-specific assumptions.
 
 ## When Not To Use
@@ -139,6 +140,7 @@ In this repo, also see:
 
 - `docs/runpod-superpowers-2026-05.md` before changing provider strategy around Flash, Serverless endpoints, `runpodctl`, cost centers, or Instant Clusters.
 - `docs/runpod-observability-ladder.md` before changing monitoring, stuck-pod diagnosis, SSH peek behavior, or progress endpoints.
+- `docs/neocloud-self-learning-runbook.md` after provider hiccups, failed smokes, manual rescues, or cost surprises that should become reusable checks or examples.
 - `docs/aws-runpod-superpowers.md` before changing AWS companion behavior such as S3 egress, ECR registry auth, SQS handoff queues, or orchestrator-side AWS locks and backstops.
 
 ## Artifact Packet

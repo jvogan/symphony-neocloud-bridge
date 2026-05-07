@@ -48,6 +48,7 @@ bin/runpod-bridge dashboard --scan-dir .runtime --out .runtime/runpod-dashboard.
 - Top-level templates match the copies under `skills/runpod-symphony/assets/templates/`.
 - `.codex/skills/runpod-symphony` resolves to the public skill source at `skills/runpod-symphony`.
 - Skill references include generic worker-readiness and failure-playbook guidance, with no private run details.
+- Self-learning notes are generalized into docs, tests, examples, or checks. Do not publish private scratch notes, pod IDs, raw logs, cost ledgers, or generated run packets.
 
 ## Operational Review
 
@@ -60,3 +61,4 @@ bin/runpod-bridge dashboard --scan-dir .runtime --out .runtime/runpod-dashboard.
 - `--max-spend-usd` is used for smoke tests.
 - Cost closeout uses `cost-report` and billing API when available.
 - Recovery playbooks use `recover-run` before manual console intervention.
+- Neocloud hiccups feed the self-learning loop in `docs/neocloud-self-learning-runbook.md` before repeating the same paid route.
