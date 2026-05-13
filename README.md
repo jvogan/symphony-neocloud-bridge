@@ -143,6 +143,8 @@ Remote creation is guarded. `create-pod` writes an audited request and resource 
 
 `run-remote` and `run-handoff` also acquire an atomic local launch lock before pod creation. Set `RUNPOD_BRIDGE_LOCK_DIR` or `--lock-dir` if several orchestrators should share a lock directory.
 
+For cost attribution, fill `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` in the manifest before launch. These fields are local closeout metadata; provider-side RunPod cost-center assignment should still be verified through the supported operator surface. If `runpod.interruptible` is true, the bridge requires checkpoint/resume policy and durable artifact egress before paid launch.
+
 For sandboxed Codex or Claude Code workers, prove the worker shell can reach RunPod REST before mutation. Some sandboxes have no outbound DNS or TCP even with `RUNPOD_API_KEY` injected. In that case, use the worker for `validate-manifest`, `prepare`, and `run-local`. The prepared packet includes `provider_handoff.json`; run that from an unsandboxed orchestrator or trusted `after_run` hook with `run-handoff`.
 
 For a capped smoke, use the single-command remote runner. It creates the pod, verifies declared artifacts, and always attempts cleanup when a pod was created:

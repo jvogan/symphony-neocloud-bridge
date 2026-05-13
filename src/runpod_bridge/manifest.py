@@ -12,7 +12,28 @@ SECRET_VALUE_RE = re.compile(
     r"(-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[A-Za-z0-9_-]{16,}|hf_[A-Za-z0-9]{16,}|lin_api_[A-Za-z0-9]{16,})"
 )
 SECRET_KEY_RE = re.compile(r"(api[_-]?key|token|password|secret|credential|private[_-]?key)", re.I)
-SAFE_REF_RE = re.compile(r"^(\$|env:|secret:|secure-store:|vault:|aws-sm:|aws-secretsmanager:|aws-sts:|gcp-sm:|azure-kv:)")
+SAFE_REF_RE = re.compile(
+    r"^(\$|env:|secret:|secure-store:|vault:|aws-sm:|aws-secretsmanager:|aws-sts:|gcp-sm:|azure-kv:|\{\{\s*RUNPOD_SECRET_[A-Za-z0-9_.-]+\s*\}\})"
+)
+RUNPOD_ENV_LIMIT = 50
+BRIDGE_MANAGED_ENV_KEYS = {
+    "SYMPHONY_RUN_ID",
+    "RUNPOD_BRIDGE_MANAGED",
+    "RUNPOD_ENABLE_REPO_BOOTSTRAP",
+    "RUNPOD_REPO_DIR",
+    "RUNPOD_REPO_SOURCE",
+    "RUNPOD_REPO_URL",
+    "RUNPOD_REPO_REF",
+    "RUNPOD_MAX_RUNTIME_MINUTES",
+    "RUNPOD_TERMINATE_AFTER_MINUTES",
+}
+DURABLE_INTERRUPTIBLE_EGRESS_MODES = {
+    "network_volume",
+    "runpod_network_volume_s3",
+    "scp",
+    "object_store_upload",
+    "aws_s3_presigned_upload",
+}
 
 
 @dataclass(frozen=True)
@@ -97,6 +118,20 @@ def validate_manifest(manifest: dict[str, Any]) -> ValidationResult:
     if provider_name != "runpod":
         warning("provider.name", f"provider {provider_name!r} is not implemented; only local validation is available")
 
+    billing = manifest.get("billing", {})
+    if billing and not isinstance(billing, dict):
+        error("billing", "must be an object when present")
+        billing = {}
+    if isinstance(billing, dict):
+        for key in ("cost_center", "project_code", "resource_owner"):
+            if key in billing and not isinstance(billing.get(key), str):
+                error(f"billing.{key}", "must be a string")
+        if remote_launch_allowed and provider_name == "runpod":
+            if not str(billing.get("cost_center") or "").strip():
+                warning("billing.cost_center", "recommended for RunPod cost-center attribution and month-end reconciliation")
+            if not str(billing.get("project_code") or "").strip():
+                warning("billing.project_code", "recommended for local closeout and internal budget mapping")
+
     budget = require_object(manifest, "budget", error)
     require_positive_number(budget, "max_runtime_minutes", "budget.max_runtime_minutes", error)
     require_positive_number(budget, "max_estimated_cost_usd", "budget.max_estimated_cost_usd", error)
@@ -154,6 +189,16 @@ def validate_manifest(manifest: dict[str, Any]) -> ValidationResult:
                 error("runpod.ports", "ports must use strings such as 8000/http or 22/tcp")
             if not isinstance(runpod.get("env", {}), dict):
                 error("runpod.env", "must be an object")
+            else:
+                env_keys = {str(key) for key in runpod.get("env", {}).keys()}
+                projected_env_count = len(env_keys | BRIDGE_MANAGED_ENV_KEYS)
+                if projected_env_count > RUNPOD_ENV_LIMIT:
+                    error(
+                        "runpod.env",
+                        f"RunPod allows at most {RUNPOD_ENV_LIMIT} environment variables per Pod; bridge-managed variables leave room for {RUNPOD_ENV_LIMIT - len(BRIDGE_MANAGED_ENV_KEYS)} manifest env vars",
+                    )
+            if "interruptible" in runpod and not isinstance(runpod.get("interruptible"), bool):
+                error("runpod.interruptible", "must be true or false")
 
     access = require_object(manifest, "access", error)
     if access:
@@ -304,6 +349,15 @@ def validate_manifest(manifest: dict[str, Any]) -> ValidationResult:
             if artifact_egress and artifact_egress.get("mode") == "workspace_archive" and not artifact_egress.get("requires_network_volume"):
                 warning("artifact_egress.mode", "large/huge workloads should consider network_volume, scp, object_store_upload, or aws_s3_presigned_upload egress")
 
+    validate_interruptible_policy(
+        manifest,
+        runpod if isinstance(runpod, dict) else {},
+        artifact_egress if isinstance(artifact_egress, dict) else {},
+        remote_launch_allowed,
+        error,
+        warning,
+    )
+
     scan_for_secrets(manifest, error)
     scan_for_placeholders(manifest, remote_launch_allowed, error, warning)
 
@@ -317,6 +371,7 @@ def build_plan(manifest: dict[str, Any], validation: ValidationResult | None = N
     workload = manifest.get("workload", {}) if isinstance(manifest.get("workload"), dict) else {}
     artifact_egress = manifest.get("artifact_egress", {}) if isinstance(manifest.get("artifact_egress"), dict) else {}
     closeout = manifest.get("closeout", {}) if isinstance(manifest.get("closeout"), dict) else {}
+    billing = manifest.get("billing", {}) if isinstance(manifest.get("billing"), dict) else {}
 
     remote_allowed = bool(manifest.get("remote_launch_allowed"))
     blockers = [issue.message if issue.path == "remote_launch_allowed" else f"{issue.path}: {issue.message}" for issue in validation.errors]
@@ -356,6 +411,12 @@ def build_plan(manifest: dict[str, Any], validation: ValidationResult | None = N
             "stop_or_delete_pod": closeout.get("stop_or_delete_pod"),
             "retain_pod": closeout.get("retain_pod", False),
             "delete_pod_if_network_volume_attached": closeout.get("delete_pod_if_network_volume_attached", True),
+        },
+        "billing": {
+            "cost_center": billing.get("cost_center", ""),
+            "project_code": billing.get("project_code", ""),
+            "resource_owner": billing.get("resource_owner", ""),
+            "cost_source": estimated_cost_source,
         },
     }
 
@@ -410,6 +471,41 @@ def scan_for_secrets(obj: Any, error) -> None:
         if isinstance(value, (bool, int, float)):
             continue
         error(path, "sensitive field must use a runtime secret reference, not a literal value")
+
+
+def validate_interruptible_policy(
+    manifest: dict[str, Any],
+    runpod: dict[str, Any],
+    artifact_egress: dict[str, Any],
+    remote_launch_allowed: bool,
+    error,
+    warning,
+) -> None:
+    if runpod.get("interruptible") is not True:
+        return
+
+    workload = manifest.get("workload", {}) if isinstance(manifest.get("workload"), dict) else {}
+    checkpoint = workload.get("checkpoint_policy", {}) if isinstance(workload.get("checkpoint_policy"), dict) else {}
+    checkpoint_mode = str(checkpoint.get("mode") or "").strip().lower()
+    stage_contract = workload.get("stage_contract", {}) if isinstance(workload.get("stage_contract"), dict) else {}
+    resume_policy = str(stage_contract.get("resume_policy") or "").strip().lower()
+    egress_mode = str(artifact_egress.get("mode") or "").strip()
+
+    def report(path: str, message: str) -> None:
+        if remote_launch_allowed:
+            error(path, message)
+        else:
+            warning(path, message)
+
+    if checkpoint_mode in ("", "none"):
+        report("workload.checkpoint_policy", "interruptible Spot Pods require an explicit checkpoint policy before paid launch")
+    if not resume_policy or resume_policy in ("none", "not_applicable", "replace-with-rerun-or-checkpoint-policy"):
+        report("workload.stage_contract.resume_policy", "interruptible Spot Pods require an explicit resume or rerun policy")
+    if egress_mode not in DURABLE_INTERRUPTIBLE_EGRESS_MODES:
+        report(
+            "artifact_egress.mode",
+            "interruptible Spot Pods require durable egress such as network_volume, runpod_network_volume_s3, scp, object_store_upload, or aws_s3_presigned_upload",
+        )
 
 
 def iter_strings(obj: Any, path: str = "") -> Iterable[tuple[str, str]]:

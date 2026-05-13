@@ -66,6 +66,11 @@
     "terminate_after_minutes": 270,
     "max_estimated_cost_usd": 25
   },
+  "billing": {
+    "cost_center": "",
+    "project_code": "",
+    "resource_owner": ""
+  },
   "repo": {
     "source": "git_remote_or_snapshot",
     "url_or_path": "replace-with-repo",
@@ -84,6 +89,7 @@
     "containerDiskInGb": 20,
     "volumeInGb": 0,
     "volumeMountPath": "/workspace",
+    "interruptible": false,
     "ports": [],
     "env": {}
   },

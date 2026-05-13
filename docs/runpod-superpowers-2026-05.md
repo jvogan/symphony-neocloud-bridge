@@ -1,6 +1,6 @@
 # RunPod Superpowers Watchlist
 
-Checked against official RunPod docs and blog posts on 2026-05-01.
+Checked against official RunPod docs and blog posts on 2026-05-01; rechecked key RunPod docs on 2026-05-13.
 
 ## Executive Summary
 
@@ -31,6 +31,7 @@ Useful RunPod surface:
 - Load-balanced endpoints fit HTTP APIs and low-latency request/response services.
 - Flash apps deploy multiple independent Serverless endpoints with isolated environments.
 - Flash can attach network volumes at `/runpod-volume/` for persistent model/data caches.
+- Current Flash docs list Python 3.10, 3.11, 3.12, and 3.13 support. Bridge manifests should pin the Python minor version used for local validation and deployment rather than assuming one ambient interpreter.
 
 Bridge shape:
 
@@ -65,7 +66,8 @@ RunPod now documents cost centers for Pods, Serverless endpoints, network volume
 
 Bridge shape:
 
-- Add optional `billing.cost_center` and `billing.project_code` manifest fields when RunPod exposes API support or `runpodctl` support.
+- Record optional `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` manifest fields now for closeout and reconciliation.
+- Assign resources to RunPod cost centers promptly through the supported operator surface; keep API or `runpodctl` assignment as a future automation once it is proven machine-readable.
 - Keep local fallback reporting from pod runtime x hourly rate.
 - Prefer REST billing records for pods, endpoints, and network volumes when reachable.
 - Include uncategorized resource checks in operator dashboards once the API/CLI exposes them.
@@ -107,7 +109,17 @@ Bridge shape:
 - Pull with AWS-compatible tooling using `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`; these are RunPod S3 API keys, not `RUNPOD_API_KEY`.
 - Use object head/hash checks for declared artifacts instead of recursive listing as the primary proof.
 
-### 7. Instant Clusters Watchlist: `runpod_cluster_v1`
+### 7. Interruptible Pod Policy
+
+Spot or interruptible Pods should be limited to retryable, checkpointed work. They are a cost optimization only when interruption can be handled without losing the only copy of work in progress.
+
+Bridge shape:
+
+- Treat `runpod.interruptible: true` as a policy gate, not just a provider field.
+- Require a non-`none` `workload.checkpoint_policy.mode`, explicit stage-contract resume/rerun policy, and durable egress before paid launch.
+- Prefer network volume, RunPod network-volume S3, SCP, object-store upload, or presigned upload egress. A completion-only workspace archive is not enough for interruptible paid runs.
+
+### 8. Instant Clusters Watchlist: `runpod_cluster_v1`
 
 Instant Clusters are managed multi-node compute clusters for distributed training or inference. Official docs describe high-speed networking, 2-8 node defaults, Slurm support, and larger sales-assisted clusters.
 

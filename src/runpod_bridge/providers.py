@@ -131,9 +131,11 @@ def provider_capabilities(provider: str = "runpod") -> dict[str, Any]:
                     "custom Docker images through Endpoint(image=...) when needed",
                     "network volumes mounted at /runpod-volume/ for persistent worker data",
                 ],
+                "python_versions": ["3.10", "3.11", "3.12", "3.13"],
                 "bridge_fit": [
                     "best for bursty function, inference, and sharded Python workloads",
                     "less fit for arbitrary shell pipelines that require full pod lifecycle control",
+                    "pin the Python minor version in the adapter contract before local validation and deploy",
                 ],
             },
             "network_volumes": {
@@ -170,7 +172,19 @@ def provider_capabilities(provider: str = "runpod") -> dict[str, Any]:
                     "billing-endpoints --backend runpodctl",
                     "billing-network-volumes --backend runpodctl",
                 ],
-                "notes": ["cost centers are available in RunPod console for team/project spend tracking"],
+                "manifest_fields": ["billing.cost_center", "billing.project_code", "billing.resource_owner"],
+                "notes": [
+                    "cost centers are available in RunPod console for team/project spend tracking",
+                    "bridge manifest billing fields preserve intended attribution for closeout even before provider-side assignment is automated",
+                ],
+            },
+            "interruptible_pods": {
+                "field": "runpod.interruptible",
+                "policy": [
+                    "require non-none workload.checkpoint_policy.mode before paid launch",
+                    "require explicit stage-contract resume or rerun policy before paid launch",
+                    "require durable artifact egress before paid launch",
+                ],
             },
             "instant_clusters": {
                 "status": "watchlist",
@@ -207,6 +221,7 @@ def provider_capabilities(provider: str = "runpod") -> dict[str, Any]:
             "Instant Clusters are a watchlist target and not implemented by the current adapter",
             "scoped RunPod API keys should be used when available, but programmatic per-run key provisioning is not implemented in this bridge",
             "REST pod create does not currently enforce budget.terminate_after_minutes; render-runpodctl-create exposes the runpodctl backstop path",
+            "provider-side cost-center assignment is recorded as intended manifest metadata until a safe machine-readable assignment route is implemented",
             "actual GPU prices still come from live RunPod pod fields or billing records",
         ],
         "next_adapters": [

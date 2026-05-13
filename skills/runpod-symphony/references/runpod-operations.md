@@ -17,11 +17,15 @@ Current MCP gaps to plan around:
 
 Use startup-command workloads that write their own logs, heartbeat, status, artifacts, hashes, and egress status. The local bridge can call the RunPod REST pod lifecycle and billing APIs when `RUNPOD_API_KEY` is present and explicit execute flags are supplied. Prefer `runpod-bridge run-handoff` for worker-produced packets and `runpod-bridge run-remote` for orchestrator-owned manifests; both combine create, packet verification, and cleanup in one audit record. Use `runpod-bridge cost-report --fetch-billing` for closeout when available; otherwise mark cost as an estimate.
 
+Record `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` in manifests when known. Treat those fields as local closeout metadata until provider-side assignment is verified through RunPod's supported operator surface.
+
 Rendered create payload size is a practical launch constraint. RunPod's public REST docs do not currently document a `dockerStartCmd` byte limit, but a live W1 smoke observed a create failure around a 65KB rendered startup body. `runpod-bridge preflight` reports `payload_post_body_bytes`, warns near 48KB, and blocks above the bridge hard limit. Compress large inline material with gzip and base64, or move it into a git snapshot, packet file, network volume, or object store before paid creation.
 
 Remote git bootstrap is a pre-workload dependency. The bridge calls `git clone` before `startup.commands` runs, so the image or template must already contain `git`. Installing git inside `startup.commands` is too late. `runpod-bridge preflight` blocks paid git-source launches unless `runpod.image_capabilities` declares `git` or `startup.bootstrap.image_has_git` is true. Verify exact images with a tiny bootstrap canary before expensive science runs.
 
 RunPod Flash and generic Serverless endpoints are now important RunPod surfaces. They use a different lifecycle from Pods. Until a Flash or Serverless adapter is implemented, use the pod runner only for pod manifests. For Flash, require local `flash build`/validation, guarded deploy authorization, endpoint job/output proof, endpoint billing, and `flash undeploy` or documented retention. Flashboot is a startup optimization for Serverless workers. Treat it as a startup signal. Workload success still requires declared artifact and validation proof.
+
+Interruptible Pods are appropriate only for retryable, checkpointed workloads. Before paid launch, require a checkpoint policy, explicit resume or rerun policy, and durable artifact egress such as a network volume, RunPod network-volume S3, SCP, object-store upload, or presigned upload.
 
 When `runpodctl` is available, `render-runpodctl-create` shows the equivalent pod creation command and includes `--terminate-after` from `budget.terminate_after_minutes`. The REST create path records that value for audit and runtime awareness, but the platform-side stop/delete backstop is exposed only through `runpodctl pod create`.
 

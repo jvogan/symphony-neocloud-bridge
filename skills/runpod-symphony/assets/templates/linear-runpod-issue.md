@@ -14,6 +14,8 @@ Run the declared workload on RunPod using the Symphony RunPod Bridge and return 
 - [ ] Contract self-check passes and stage contract names real inputs, exact commands, route proof, expected outputs, done markers, resume policy, and claim level.
 - [ ] `remote_launch_allowed: true` is present before any paid resource is created.
 - [ ] Runtime and spend limits include `budget.max_runtime_minutes`, `budget.max_estimated_cost_usd`, and `budget.terminate_after_minutes` when using `runpodctl` creation.
+- [ ] Billing attribution is declared with `billing.cost_center`, `billing.project_code`, or documented reason for leaving it uncategorized.
+- [ ] If `runpod.interruptible: true`, checkpoint/resume policy and durable egress are explicit before launch.
 - [ ] Pod ID, image, data center, runtime, and cost estimate are recorded.
 - [ ] Pod state is polled and workload heartbeat/status files are captured.
 - [ ] Declared validation commands pass.

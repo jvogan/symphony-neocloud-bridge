@@ -35,6 +35,7 @@ The skill works for Codex workers, Claude Code workers, and mixed-agent Symphony
 2. **Success requires declared artifacts.** Pod RUNNING, container exit codes, and log presence do not close a run as success. Artifacts must exist at declared paths with SHA-256 hashes and passing validation commands.
 3. **Secrets stay out of the contract.** API keys, registry credentials, private datasets, unpublished sequences, and customer process records belong in environment variables or runtime injection references. Manifests, templates, logs, and Linear comments carry only references.
 4. **Cleanup is part of closeout.** Stop or delete the pod unless retention is explicitly approved and documented. If a network volume is attached, terminate the pod and preserve the volume rather than relying on stop semantics.
+5. **Billing attribution is explicit.** Record `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` before paid launch when those values are known.
 
 ## Inputs To Establish
 
@@ -88,6 +89,7 @@ Codex and Claude Code worker sandboxes may have no outbound DNS or TCP. Run `run
 ### Productivity proof for long or expensive runs
 
 - Run `contract-self-check`, `source-check --execute`, `preflight`, `egress-plan`, `profiles --recommend-for`, and `productivity-plan` before paid launch.
+- For Spot or interruptible pods, require non-`none` checkpoint policy, explicit resume/rerun policy, and durable artifact egress before paid launch.
 - After launch, sample `runtime-metrics` early and again after a few minutes. Use `supervise`, `cost-report`, and `dashboard` during closeout.
 - A live productivity channel (sanitized `/healthz`, SSH or log tail, or another fetchable status packet) is required before paid launch. Provider RUNNING, billing records, runtime utilization, and completion-only artifact servers do not satisfy this gate.
 

@@ -38,6 +38,7 @@ The local `runpod-bridge` CLI includes a stdlib REST adapter for the RunPod pod 
 - `aws-orchestrator-plan` renders optional AWS companion commands for STS-scoped object-store upload, RunPod network-volume S3 tooling, ECR registry refresh, Secrets Manager refs, SQS handoffs, DynamoDB locks, and EventBridge cleanup backstops without executing them.
 - `billing-pods` and `cost-report` use the REST billing surface when available, with runtime x cost fields as fallback.
 - `billing-pods`, `billing-endpoints`, and `billing-network-volumes` can use `--backend runpodctl` for read-only billing checks when the operator host has `runpodctl`.
+- Optional `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` manifest fields preserve local attribution even when provider-side cost-center assignment remains operator-managed.
 - `render-runpodctl-create` renders `budget.terminate_after_minutes` to `runpodctl pod create --terminate-after`; the REST create path records the value but does not enforce it platform-side.
 - `orchestrator-scan`, `orchestrator-once`, and `issue-intake` make worker handoff packets executable by a trusted orchestrator lane.
 - `dashboard`, `supervise`, and `recover-run` support multi-run monitoring and failure cleanup.
@@ -73,6 +74,7 @@ The bridge tracks these official surfaces:
 - Pod REST API: `POST /pods`, `GET /pods`, `GET /pods/{podId}`, pod update/start/stop/delete/reset/restart.
 - Pod GraphQL runtime metrics: `pod.runtime.uptimeInSeconds`, container CPU/memory samples, GPU utilization samples, and port mappings.
 - Billing REST API: `GET /billing/pods`, `GET /billing/endpoints`, `GET /billing/networkvolumes`.
+- Cost centers: provider-side attribution for Pods, Serverless endpoints, network volumes, and Instant Clusters; bridge manifests record intended attribution for closeout and reconciliation.
 - Network volumes: create/list/get/update/delete; Pods attach volumes at deployment time and preserve data after pod deletion.
 - RunPod network-volume S3: post-cleanup artifact pull through datacenter-specific S3-compatible endpoints with separate S3 API credentials.
 - AWS S3 presigned upload: direct archive egress to AWS S3 with no AWS credentials inside the pod.
@@ -83,6 +85,7 @@ The bridge tracks these official surfaces:
 - Instant Clusters: managed multi-node compute for distributed workloads and future adapter work.
 - Ports: HTTP proxy uses the pod/port proxy host; TCP uses `publicIp` plus `portMappings`; symmetric TCP uses pseudo ports above `70000`.
 - SSH/SCP: full SCP requires public IP support, `22/tcp`, sshd in the image, and SSH public key auth.
+- Interruptible Pods: allowed only with explicit checkpoint/resume policy and durable egress before paid launch.
 
 ## Provider-Specific Block
 

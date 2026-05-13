@@ -1,6 +1,6 @@
 # RunPod Official Surfaces
 
-Checked against official RunPod docs and blog posts on 2026-05-03.
+Checked against official RunPod docs and blog posts on 2026-05-03; rechecked route updates on 2026-05-13.
 
 ## REST API
 
@@ -57,6 +57,7 @@ Checked against official RunPod docs and blog posts on 2026-05-03.
 - The REST docs do not document a maximum `dockerStartCmd` or POST body size. The bridge uses an empirical guard because a live smoke failed near a 65KB rendered startup command.
 - Full SCP requires public IP support, `22/tcp`, an SSH daemon in the image/template, and SSH key auth.
 - Network volumes for Pods require Secure Cloud, attach at deployment time, and retain data after pod deletion.
+- Network volumes constrain scheduling to compatible data-center capacity; manifests should record the data center and closeout owner when a volume is retained.
 - RunPod network-volume S3 is suitable for durable file movement without keeping a pod alive.
 - Billing closeout should prefer `GET /billing/pods` when available, then fall back to runtime times pod cost fields.
 - Runtime metrics closeout and monitoring should use GraphQL `pod.runtime` as read-only health evidence. Tiny or resetting `uptimeInSeconds` can prove a likely crash loop; utilization samples alone do not prove productivity or artifact success.
@@ -67,7 +68,9 @@ Checked against official RunPod docs and blog posts on 2026-05-03.
 - RunPod network-volume S3 uses datacenter-specific endpoints such as `https://s3api-us-ks-2.runpod.io/` and separate S3 API credentials, not `RUNPOD_API_KEY`.
 - AWS S3 presigned upload is a strong companion path for direct pod-to-S3 artifact egress without AWS credentials inside the pod; use `artifact_egress.mode: aws_s3_presigned_upload` and inject URLs only at runtime.
 - API keys support restricted/read-only/all permissions in the console; the bridge did not verify an official API for programmatic per-run key creation or expiry.
-- Cost centers currently read as a console-managed attribution layer; add resource assignment to operator closeout when API or CLI support is available.
+- Cost centers apply to Pods, Serverless endpoints, network volumes, and Instant Clusters. Bridge manifests should record intended `billing.cost_center` and `billing.project_code`, then operator closeout should verify provider-side assignment through the supported surface.
 - RunPod Flash is a separate Serverless/Python function lane, not the same adapter as the current pod lifecycle runner.
+- Flash docs currently list Python 3.10, 3.11, 3.12, and 3.13 support; adapter contracts should pin the Python minor version used for local validation and deploy.
 - Flashboot is a Serverless worker startup optimization; enabling it does not replace artifact proof, budget gates, or undeploy/cleanup proof.
+- `runpod.interruptible: true` should require checkpoint/resume policy and durable artifact egress before paid launch.
 - Instant Clusters are a separate multi-node adapter candidate, not a pod profile.

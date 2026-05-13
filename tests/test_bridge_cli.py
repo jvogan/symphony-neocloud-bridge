@@ -135,6 +135,34 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertTrue(any("secret" in issue.message for issue in result.errors))
 
+    def test_runpod_secret_reference_in_env_is_allowed(self):
+        manifest = self.manifest()
+        manifest["runpod"]["env"] = {"API_KEY": "{{ RUNPOD_SECRET_demo_api_key }}"}
+        result = validate_manifest(manifest)
+        self.assertTrue(result.ok, result.errors)
+
+    def test_env_limit_accounts_for_bridge_managed_variables(self):
+        manifest = self.manifest()
+        manifest["runpod"]["env"] = {f"USER_ENV_{index}": "value" for index in range(42)}
+        result = validate_manifest(manifest)
+        self.assertFalse(result.ok)
+        self.assertTrue(any(issue.path == "runpod.env" for issue in result.errors))
+
+    def test_interruptible_remote_launch_requires_checkpoint_and_durable_egress(self):
+        manifest = load_manifest(ROOT / "examples" / "public-smoke" / "launch_manifest.json")
+        manifest["remote_launch_allowed"] = True
+        manifest["launch_authorization"] = {
+            "source": "test",
+            "approved_by": "test",
+            "approved_at": "2026-05-13T00:00:00Z",
+        }
+        manifest["runpod"]["interruptible"] = True
+        result = validate_manifest(manifest)
+        self.assertFalse(result.ok)
+        error_paths = {issue.path for issue in result.errors}
+        self.assertIn("workload.checkpoint_policy", error_paths)
+        self.assertIn("artifact_egress.mode", error_paths)
+
     def test_cpu3c_disk_cap_blocks_before_paid_launch(self):
         manifest = copy.deepcopy(self.manifest())
         manifest["runpod"]["gpuCount"] = 0
@@ -174,6 +202,7 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(plan["task_scale"], "small")
         self.assertFalse(plan["remote_ready"])
         self.assertIn("remote_launch_allowed is false; dry-run only", plan["blockers"])
+        self.assertEqual(plan["billing"]["cost_center"], "")
 
     def test_render_startup_contains_monitoring_contract(self):
         script = render_startup_script(self.manifest())
@@ -822,6 +851,9 @@ class BridgeTests(unittest.TestCase):
         self.assertIn("aws_s3_presigned_upload", capabilities["artifact_egress"]["production"])
         self.assertIn("runpod_flash_v1", {item["name"] for item in capabilities["next_adapters"]})
         self.assertIn("billing-endpoints", capabilities["resources"]["billing"]["bridge_commands"])
+        self.assertIn("billing.cost_center", capabilities["resources"]["billing"]["manifest_fields"])
+        self.assertIn("3.13", capabilities["resources"]["flash"]["python_versions"])
+        self.assertIn("interruptible_pods", capabilities["resources"])
         huge = get_profile("huge-sharded-volume")
         self.assertEqual(huge["workload_scale"], "huge")
         manifest = load_manifest(ROOT / "examples" / "huge-sharded" / "launch_manifest.json")
