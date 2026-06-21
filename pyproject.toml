@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "symphony-cloud-bridge"
+dynamic = ["version"]
+description = "Agent cloud setup runbooks and guarded execution lanes for Symphony and Linear"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["cloud", "runpod", "modal", "lambda", "aws", "symphony", "linear", "codex", "automation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Build Tools",
+]
+
+[project.scripts]
+cloud-bridge = "cloud_bridge.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "cloud_bridge.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

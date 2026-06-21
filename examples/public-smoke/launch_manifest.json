@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "public-inline-smoke",
+  "compute_profile": "cheap-cpu-inline-smoke",
+  "workload": {
+    "scale": "small",
+    "description": "Public CPU-only inline smoke contract",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline startup command"
+      ],
+      "exact_commands": [
+        "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/public-smoke-result.json').write_text('{\"ok\": true, \"mode\": \"public-inline-smoke\"}\\n')\nPY",
+        "python3 -m json.tool runpod-execution/artifacts/public-smoke-result.json >/dev/null"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/public-smoke-result.json"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/public-smoke-result.json"
+      ],
+      "timeout_minutes": 5,
+      "resume_policy": "rerun from scratch; no checkpoint state",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "repo.source=inline_commands; startup writes the declared artifact directly"
+        ],
+        "tool_invocation": [
+          "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/public-smoke-result.json').write_text('{\"ok\": true, \"mode\": \"public-inline-smoke\"}\\n')\nPY"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool runpod-execution/artifacts/public-smoke-result.json >/dev/null"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; no domain interpretation claim"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "launch_authorization": {
+    "source": "",
+    "approved_by": "",
+    "approved_at": "",
+    "linear_issue_url": ""
+  },
+  "budget": {
+    "max_runtime_minutes": 5,
+    "terminate_after_minutes": 10,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "inline_commands",
+    "url_or_path": "inline",
+    "commit_or_snapshot": "inline:public-smoke-v1",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "symphony-public-inline-smoke",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 10,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [
+      "8000/http",
+      "8000/tcp"
+    ],
+    "env": {
+      "SYMPHONY_RUN_ID": "public-inline-smoke"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": true,
+    "tcp_ports_required": true,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "inspection": {
+      "hold_after_success_seconds": 180,
+      "http_artifact_server_port": 8000
+    },
+    "progress": {
+      "http_status_server_port": 8000,
+      "auth_token_ref": "",
+      "include_log_tail": false,
+      "log_tail_bytes": 4096
+    },
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/artifacts",
+      "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/public-smoke-result.json').write_text('{\"ok\": true, \"mode\": \"public-inline-smoke\"}\\n')\nPY"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool runpod-execution/artifacts/public-smoke-result.json >/dev/null"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "public_smoke_result",
+      "path": "runpod-execution/artifacts/public-smoke-result.json",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "workspace_archive",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": false
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-public-inline-smoke"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

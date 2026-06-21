@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "huge-sharded-demo",
+  "compute_profile": "gpu-sharded-checkpointed",
+  "workload": {
+    "scale": "huge",
+    "description": "Long-running sharded GPU workload with checkpoints",
+    "shards": [
+      {"shard_id": "shard-000", "command": "python workflow.py --shard 0 --shards 4"},
+      {"shard_id": "shard-001", "command": "python workflow.py --shard 1 --shards 4"},
+      {"shard_id": "shard-002", "command": "python workflow.py --shard 2 --shards 4"},
+      {"shard_id": "shard-003", "command": "python workflow.py --shard 3 --shards 4"}
+    ],
+    "checkpoint_policy": {
+      "mode": "periodic",
+      "interval_minutes": 15,
+      "path": "/workspace/checkpoints",
+      "resume_required": true
+    },
+    "stage_contract": {
+      "inputs": [
+        "campaign_manifest.json",
+        "/workspace/checkpoints when present"
+      ],
+      "exact_commands": [
+        "python workflow.py --manifest campaign_manifest.json --checkpoint-dir /workspace/checkpoints --out runpod-execution/artifacts",
+        "python validate_outputs.py runpod-execution/artifacts"
+      ],
+      "required_tools": [
+        {
+          "name": "python",
+          "command": "command -v python && python --version",
+          "fail_closed": true
+        },
+        {
+          "name": "workflow.py",
+          "command": "test -s workflow.py",
+          "fail_closed": true
+        },
+        {
+          "name": "validate_outputs.py",
+          "command": "test -s validate_outputs.py",
+          "fail_closed": true
+        }
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/summary.json",
+        "runpod-execution/artifacts/runpod-execution.tar.gz"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/summary.json",
+        "/workspace/checkpoints"
+      ],
+      "timeout_minutes": 1440,
+      "resume_policy": "resume from /workspace/checkpoints when present; rerun only missing shards",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "test -s campaign_manifest.json",
+          "test -d /workspace/checkpoints || mkdir -p /workspace/checkpoints"
+        ],
+        "tool_invocation": [
+          "python workflow.py --manifest campaign_manifest.json --checkpoint-dir /workspace/checkpoints --out runpod-execution/artifacts"
+        ],
+        "artifact_validation": [
+          "python validate_outputs.py runpod-execution/artifacts"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only until the domain repo independently validates analytical claims"
+        ]
+      },
+      "real_smoke": {
+        "manifest": "examples/cheap-pod/launch_manifest.json",
+        "same_route": true,
+        "artifact_verified": true
+      },
+      "partial_summary_path": "runpod-execution/artifacts/partial-summary.json",
+      "cardinality_gate": {
+        "estimate": "4 shards x 1 campaign manifest x checkpoint resume",
+        "budget_limit": "stop before launch if estimated cost exceeds budget.max_estimated_cost_usd or shard count exceeds approved plan",
+        "on_exceed": "reduce shard scope or defer with degraded_closeout_required"
+      },
+      "fallback_policy": {
+        "no_silent_fallback": true,
+        "allowed_fallbacks": [
+          "resume_missing_shards_only"
+        ],
+        "degraded_closeout_required": true
+      },
+      "evidence_lanes": {
+        "primary": "runpod-execution/artifacts/summary.json",
+        "context": [],
+        "dossier": "runpod-execution/artifacts/runpod-execution.tar.gz"
+      },
+      "normalized_outputs": [
+        "runpod-execution/artifacts/summary.json"
+      ],
+      "control_policy": {
+        "positive_controls": [],
+        "negative_controls": [],
+        "controls_are_discoveries": false
+      },
+      "stale_marker_policy": {
+        "requires_input_hashes": true,
+        "hash_manifest_path": "runpod-execution/input-hashes.json"
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 1440,
+    "terminate_after_minutes": 1500,
+    "max_estimated_cost_usd": 250
+  },
+  "repo": {
+    "source": "git_remote",
+    "url_or_path": "https://example.invalid/repo.git",
+    "commit_or_snapshot": "example-commit-sha",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04",
+    "templateId": "",
+    "name": "symphony-huge-sharded-demo",
+    "gpuCount": 1,
+    "gpuTypeIds": [
+      "NVIDIA RTX A6000",
+      "NVIDIA A40"
+    ],
+    "dataCenterIds": [],
+    "networkVolumeId": "approved-volume-id-before-launch",
+    "containerDiskInGb": 80,
+    "volumeInGb": 250,
+    "volumeMountPath": "/workspace",
+    "supportPublicIp": true,
+    "ports": [
+      "22/tcp"
+    ],
+    "env": {
+      "OBJECT_STORE_CREDENTIAL_REF": "secret:object-store-token",
+      "SYMPHONY_RUN_ID": "huge-sharded-demo"
+    }
+  },
+  "access": {
+    "ssh_required": true,
+    "full_ssh_scp_required": true,
+    "http_proxy_required": false,
+    "tcp_ports_required": true,
+    "ssh_public_key_ref": "runpod-account-key:symphony-workers",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "progress": {
+      "http_status_server_port": 0,
+      "auth_token_ref": "",
+      "include_log_tail": false,
+      "log_tail_bytes": 4096,
+      "schema": "ssh_log_tail_or_checkpoint_progress",
+      "requires_repeated_samples_for_progress": true
+    },
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/logs runpod-execution/artifacts /workspace/checkpoints",
+      "python workflow.py --manifest campaign_manifest.json --checkpoint-dir /workspace/checkpoints --out runpod-execution/artifacts",
+      "python validate_outputs.py runpod-execution/artifacts"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 20,
+    "progress_evaluation": {
+      "monitor_liveness_is_not_workload_progress": true,
+      "requires_advancement_across_samples": true,
+      "advancement_signals": [
+        "startup.log byte count increases through SSH tail",
+        "/workspace/checkpoints file count or mtime advances",
+        "status.json phase/progress fields change",
+        "artifact_hashes.jsonl grows during staged outputs"
+      ]
+    },
+    "escalation_policy": {
+      "warn_after_minutes_without_advancement": 20,
+      "operator_peek_after_minutes_without_advancement": 40,
+      "cleanup_after_minutes_without_runtime_or_progress": 60
+    },
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId",
+      "machine.gpuTypeId",
+      "publicIp",
+      "portMappings",
+      "networkVolume.id"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python validate_outputs.py runpod-execution/artifacts"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "summary",
+      "path": "runpod-execution/artifacts/summary.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "archive",
+      "path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "object_store_upload",
+    "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+    "destination_uri_ref": "env:RUNPOD_OBJECT_STORE_URI",
+    "credentials_ref": "secret:object-store-token",
+    "s3_endpoint_url_ref": "env:AWS_ENDPOINT_URL",
+    "requires_network_volume": true,
+    "requires_scp": true,
+    "requires_object_store_upload": true
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-huge-sharded-demo"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

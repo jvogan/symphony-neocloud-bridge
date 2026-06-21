@@ -1,0 +1,4 @@
+interface:
+  display_name: "RunPod Symphony"
+  short_description: "RunPod lane checks for Symphony"
+  default_prompt: "Use $cloud-symphony for Linear-backed RunPod work: local dry-run first; require remote_launch_allowed, live productivity proof for nontrivial runs, artifact validation, and cleanup before success. After launch, monitor updates must copy progress-report classification.state/workload_progressing/monitor_alive/outage_suspected/next_action verbatim; never paraphrase liveness as progress or one failed probe as outage."

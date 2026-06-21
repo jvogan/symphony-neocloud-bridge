@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_cloud_launch",
+  "provider": {
+    "name": "huggingface",
+    "adapter": "huggingface_v1"
+  },
+  "run_id": "hf-job-demo",
+  "compute_profile": "hf-cpu-job-demo",
+  "workload": {
+    "scale": "small",
+    "description": "Cheap CPU-only Hugging Face Job dry-run contract",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline job command"
+      ],
+      "exact_commands": [
+        "python3 -c \"import json,pathlib; pathlib.Path('hf-execution/artifacts/result.json').write_text(json.dumps({'ok': True, 'mode': 'hf-job-demo'})+chr(10))\"",
+        "python3 -m json.tool hf-execution/artifacts/result.json >/dev/null"
+      ],
+      "expected_outputs": [
+        "hf-execution/artifacts/result.json"
+      ],
+      "done_markers": [
+        "hf-execution/status.json",
+        "hf-execution/artifacts/result.json"
+      ],
+      "timeout_minutes": 10,
+      "resume_policy": "rerun from scratch; no checkpoint state",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "container starts from dockerImage; the job command writes outputs under hf-execution/"
+        ],
+        "tool_invocation": [
+          "python3 writes hf-execution/artifacts/result.json, then huggingface_hub uploads it to the egress repo"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool hf-execution/artifacts/result.json >/dev/null"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; no domain interpretation claim"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 10,
+    "terminate_after_minutes": 15,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "inline_commands",
+    "url_or_path": "inline",
+    "commit_or_snapshot": "inline:hf-job-demo",
+    "workdir": "/workspace"
+  },
+  "huggingface": {
+    "namespace": "your-namespace",
+    "flavor": "cpu-basic",
+    "dockerImage": "python:3.12-slim",
+    "timeoutSeconds": 600,
+    "environment": {
+      "SYMPHONY_RUN_ID": "hf-job-demo"
+    },
+    "secret_refs": {
+      "HF_TOKEN": "HF_TOKEN"
+    },
+    "labels": {
+      "symphony_run_id": "hf-job-demo"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "execution_dir": "hf-execution",
+    "log_file": "hf-execution/logs/job.log",
+    "status_file": "hf-execution/status.json",
+    "heartbeat_file": "hf-execution/monitor_events.ndjson",
+    "commands": [
+      "set -euo pipefail",
+      "mkdir -p hf-execution/artifacts",
+      "python3 -c \"import json,pathlib; pathlib.Path('hf-execution/artifacts/result.json').write_text(json.dumps({'ok': True, 'mode': 'hf-job-demo'})+chr(10))\"",
+      "pip install --quiet huggingface_hub",
+      "python3 -c \"from huggingface_hub import HfApi; api=HfApi(); api.create_repo(repo_id='your-namespace/symphony-hf-job-outputs', repo_type='dataset', exist_ok=True); api.upload_file(path_or_fileobj='hf-execution/artifacts/result.json', path_in_repo='hf-execution/artifacts/result.json', repo_id='your-namespace/symphony-hf-job-outputs', repo_type='dataset')\""
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [],
+    "requires_workload_heartbeat": false,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool hf-execution/artifacts/result.json >/dev/null"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "hf_job_result",
+      "path": "hf-execution/artifacts/result.json",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "hf_hub_repo",
+    "repo_id": "your-namespace/symphony-hf-job-outputs",
+    "repo_type": "dataset",
+    "revision": "main"
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-hf-job-demo"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": false,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": false,
+    "delete_pod_if_network_volume_attached": false,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

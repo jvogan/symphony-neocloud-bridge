@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_runpod_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "runpod-network-volume-s3-demo",
+  "compute_profile": "cheap-cpu-pod-dryrun",
+  "workload": {
+    "scale": "small",
+    "description": "Small RunPod workload with RunPod network-volume S3 artifact pull before cleanup verification",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "inline startup command"
+      ],
+      "exact_commands": [
+        "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/network-volume-s3-result.json').write_text('{\"ok\": true, \"mode\": \"runpod-network-volume-s3-demo\"}\\n')\nPY",
+        "python3 -m json.tool runpod-execution/artifacts/network-volume-s3-result.json >/dev/null"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/network-volume-s3-result.json",
+        "runpod-execution/artifacts/runpod-execution.tar.gz"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/network-volume-s3-result.json"
+      ],
+      "timeout_minutes": 10,
+      "resume_policy": "rerun from scratch; retained network volume is used only for artifact egress",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "repo checkout or local run directory exists before startup command runs",
+          "RunPod network volume is mounted at /workspace"
+        ],
+        "tool_invocation": [
+          "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/network-volume-s3-result.json').write_text('{\"ok\": true, \"mode\": \"runpod-network-volume-s3-demo\"}\\n')\nPY"
+        ],
+        "artifact_validation": [
+          "python3 -m json.tool runpod-execution/artifacts/network-volume-s3-result.json >/dev/null"
+        ],
+        "claim_boundaries": [
+          "artifact_execution_only; RunPod S3 API pull is transport proof, not domain validation"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 10,
+    "terminate_after_minutes": 15,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "git_remote",
+    "url_or_path": "https://example.invalid/network-volume-s3-workload.git",
+    "commit_or_snapshot": "dryrun-snapshot",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "symphony-runpod-network-volume-s3-demo",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [
+      "US-KS-2"
+    ],
+    "networkVolumeId": "approved-network-volume-id-before-launch",
+    "containerDiskInGb": 10,
+    "volumeInGb": 20,
+    "volumeMountPath": "/workspace",
+    "ports": [],
+    "env": {
+      "SYMPHONY_RUN_ID": "runpod-network-volume-s3-demo"
+    }
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "commands": [
+      "set -euo pipefail",
+      "cd /workspace/repo",
+      "mkdir -p runpod-execution/artifacts",
+      "python3 - <<'PY'\nfrom pathlib import Path\nPath('runpod-execution/artifacts/network-volume-s3-result.json').write_text('{\"ok\": true, \"mode\": \"runpod-network-volume-s3-demo\"}\\n')\nPY"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId",
+      "networkVolume.id"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 -m json.tool runpod-execution/artifacts/network-volume-s3-result.json >/dev/null"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "network_volume_s3_result",
+      "path": "runpod-execution/artifacts/network-volume-s3-result.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "archive",
+      "path": "runpod-execution/artifacts/runpod-execution.tar.gz",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "runpod_network_volume_s3",
+    "archive_path": "/workspace/runpod-execution/artifacts/runpod-execution.tar.gz",
+    "data_center_id": "US-KS-2",
+    "credentials_ref": "env:RUNPOD_NETWORK_VOLUME_S3_PROFILE",
+    "requires_network_volume": true,
+    "requires_scp": false,
+    "requires_object_store_upload": false
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "symphony-runpod-network-volume-s3-demo"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}
