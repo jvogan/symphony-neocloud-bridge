@@ -8,9 +8,9 @@ Make cloud compute usable by AI agents.
 
 AI agents can write the workload, but cloud providers still expect an operator. Symphony Neocloud Bridge gives agents that operator layer: choose the right compute, check that launch is allowed, prepare source safely, run the provider workflow, bring artifacts back, record cost, and prove cleanup.
 
-It is not a cloud provider. It is the bridge between an agent's task and cloud resources such as RunPod, Hugging Face Jobs, AWS, Modal, Lambda, Beam, and similar providers.
+It connects an agent's task to compute you already have on providers such as RunPod, Hugging Face Jobs, AWS, Modal, Lambda, and Beam.
 
-Inside are launch manifests, provider setup notes, local preflight checks, startup templates, handoff packets, artifact checks, cost limits, cleanup rules, and learning notes. The bridge also marks which provider paths have automated launch support so agents do not attempt paid actions where the repo only contains guidance. Run `cloud-bridge providers` to see the current coverage.
+Inside are launch manifests, provider setup notes, local preflight checks, startup templates, handoff packets, artifact checks, cost limits, cleanup rules, and learning notes. The bridge also marks which provider paths have automated launch support so agents do not attempt paid actions where the toolkit only contains guidance. Run `cloud-bridge providers` to see the current coverage.
 
 ## How it works
 
@@ -214,10 +214,10 @@ When a Linear closeout body is ready, post it only with explicit mutation confir
 bin/cloud-bridge linear-comment TEAM-123 --body-file runpod-execution/symphony_outcome.md --execute --yes-comment-linear
 ```
 
-## Public Release
+## Built-In Audits
 
-Run `bin/cloud-bridge public-audit` before publishing. It checks required release files, JSON validity, manifest validity, contract self-checks, and release-readiness text policy. Run `bin/cloud-bridge audit-manifests <domain-repo> --migration-hints --summary-only` in downstream workload repos to catch stale copied launch bundles before a worker tries to launch them, and drop `--summary-only` when you need per-file details. Run `bin/cloud-bridge audit-runpod-ops <domain-repo> --summary-only` to catch old operational recipes such as direct RunPod REST mutation, local app config key scraping, or split create/cleanup flows. See [docs/manifest-migration-guide.md](docs/manifest-migration-guide.md) and [docs/runpod-status-taxonomy.md](docs/runpod-status-taxonomy.md) when porting older workload bundles.
+Run `bin/cloud-bridge public-audit` to self-check this repo: required files, JSON validity, manifest validity, contract self-checks, and a text policy check. Run `bin/cloud-bridge audit-manifests <domain-repo> --migration-hints --summary-only` in downstream workload repos to catch stale copied launch bundles before a worker tries to launch them, and drop `--summary-only` when you need per-file details. Run `bin/cloud-bridge audit-runpod-ops <domain-repo> --summary-only` to catch old operational recipes such as direct RunPod REST mutation, local app config key scraping, or split create/cleanup flows. See [docs/manifest-migration-guide.md](docs/manifest-migration-guide.md) and [docs/runpod-status-taxonomy.md](docs/runpod-status-taxonomy.md) when porting older workload bundles.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
