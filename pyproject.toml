@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "symphony-cloud-bridge"
 dynamic = ["version"]
-description = "Agent cloud setup runbooks and guarded execution lanes for Symphony and Linear"
+description = "Skills and runbooks for your AI agent to use cloud compute on your technical projects: manifests, preflight checks, artifact proof, cost limits, and cleanup for RunPod, HF Jobs, AWS, Modal, Lambda, and more"
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
