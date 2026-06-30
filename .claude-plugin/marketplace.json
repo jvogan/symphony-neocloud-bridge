@@ -1,0 +1,22 @@
+{
+  "name": "symphony-neocloud-bridge",
+  "owner": {
+    "name": "Jacob Vogan"
+  },
+  "metadata": {
+    "version": "0.1.0",
+    "description": "Public-safe remote compute handoff and validation skills."
+  },
+  "plugins": [
+    {
+      "name": "cloud-symphony",
+      "displayName": "Cloud Symphony",
+      "source": "./",
+      "description": "Prepare guarded remote-compute run packets.",
+      "category": "developer-tools",
+      "tags": ["cloud-compute", "symphony", "runpod"],
+      "strict": false,
+      "skills": ["./skills/cloud-symphony"]
+    }
+  ]
+}

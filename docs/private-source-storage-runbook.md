@@ -36,12 +36,7 @@ bin/cloud-bridge source-ingress-plan \
   --source-archive .runtime/private-source-packet/source_snapshot.tar.gz
 ```
 
-The plan renders `aws s3 cp` and `aws s3api head-object` commands using the RunPod S3-compatible endpoint for the declared data center. The required credentials are RunPod S3 API keys exposed as AWS-compatible env vars on the orchestrator host:
-
-```bash
-export AWS_ACCESS_KEY_ID=<runpod-s3-access-key>
-export AWS_SECRET_ACCESS_KEY=<runpod-s3-secret-key>
-```
+The plan renders `aws s3 cp` and `aws s3api head-object` commands using the RunPod S3-compatible endpoint for the declared data center. Load the RunPod S3 API keys into `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from your secure local secret store on the orchestrator host.
 
 Do not put these keys in manifests, Linear, logs, or repo files. They are separate from `RUNPOD_API_KEY`.
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "cloud-symphony",
+  "version": "0.1.0",
+  "description": "Cloud Symphony skills for public-safe remote compute handoff, dry-runs, artifact proof, and cleanup.",
+  "author": {
+    "name": "Jacob Vogan",
+    "url": "https://github.com/jvogan"
+  },
+  "skills": ["./skills/cloud-symphony"]
+}

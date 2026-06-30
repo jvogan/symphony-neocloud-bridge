@@ -90,9 +90,9 @@ clean-exit auto-restart loop (below) makes "looks done" especially deceptive.
   (`POST /v1/containerregistryauth {name,username,password}` → `id`, then
   `containerRegistryAuthId` at create). Without it **pod creation succeeds
   silently and the container never starts** — no "unauthorized" surfaces through
-  `desiredStatus`. **Pre-verify the registry PAT:**
-  `curl -sI -u user:PAT https://<registry>/v2/<owner>/<img>/manifests/<tag>`
-  expecting HTTP 200.
+  `desiredStatus`. **Pre-verify registry access from a logged-in Docker client:**
+  `docker manifest inspect <registry>/<owner>/<img>:<tag>` expecting a successful
+  manifest response.
 - **Multi-arch digest trap:** a digest copied from a CI workflow summary is the
   top-level **multi-arch index**, not the `linux/amd64` runtime child manifest.
   Pinning the index (or an attestation / unknown-platform descriptor) makes

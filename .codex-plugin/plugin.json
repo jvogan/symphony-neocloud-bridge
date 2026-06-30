@@ -1,0 +1,23 @@
+{
+  "name": "cloud-symphony",
+  "version": "0.1.0",
+  "description": "Cloud Symphony skills for public-safe remote compute handoff, dry-runs, artifact proof, and cleanup.",
+  "author": {
+    "name": "Jacob Vogan",
+    "url": "https://github.com/jvogan"
+  },
+  "homepage": "https://github.com/jvogan/symphony-neocloud-bridge",
+  "repository": "https://github.com/jvogan/symphony-neocloud-bridge",
+  "license": "MIT",
+  "keywords": ["cloud-compute", "symphony", "runpod"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Cloud Symphony",
+    "shortDescription": "Remote compute run checks",
+    "longDescription": "Public-safe Cloud Symphony skills for local dry-runs, guarded remote compute preparation, provider handoff, artifact validation, cost checks, and cleanup proof.",
+    "developerName": "Jacob Vogan",
+    "category": "Developer Tools",
+    "capabilities": ["Skills"],
+    "defaultPrompt": ["Use $cloud-symphony to prepare a guarded remote-compute run packet."]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "symphony-neocloud-bridge",
+  "interface": {
+    "displayName": "Symphony Neocloud Bridge"
+  },
+  "plugins": [
+    {
+      "name": "cloud-symphony",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

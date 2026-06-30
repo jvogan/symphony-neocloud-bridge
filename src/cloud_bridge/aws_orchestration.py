@@ -106,11 +106,17 @@ def sts_object_store_plan(manifest: dict[str, Any], aws_config: dict[str, Any]) 
     ]
     if policy_file:
         command.extend(["--policy", f"file://{policy_file}"])
-    command.extend([">", f".runtime/aws-sts-{safe_name(str(manifest.get('run_id') or 'run'))}.json"])
+    credential_file = f".runtime/aws-sts-{safe_name(str(manifest.get('run_id') or 'run'))}.json"
+    command.extend([">", credential_file])
     commands.append(" ".join(command))
-    commands.append("export AWS_ACCESS_KEY_ID=<from .Credentials.AccessKeyId>")
-    commands.append("export AWS_SECRET_ACCESS_KEY=<from .Credentials.SecretAccessKey>")
-    commands.append("export AWS_SESSION_TOKEN=<from .Credentials.SessionToken>")
+    commands.append(
+        "python3 -c 'import json, pathlib, sys; "
+        "c=json.load(open(sys.argv[1]))[\"Credentials\"]; "
+        "fields=[(\"AWS_ACCESS_KEY_ID\",\"AccessKeyId\"),(\"AWS_SECRET_ACCESS_KEY\",\"SecretAccessKey\"),(\"AWS_SESSION_TOKEN\",\"SessionToken\")]; "
+        "pathlib.Path(sys.argv[2]).write_text(\"\\n\".join(\"export \" + env + \"=\\\"\" + c[key] + \"\\\"\" for env,key in fields) + \"\\n\")' "
+        f"{credential_file} {credential_file}.env"
+    )
+    commands.append(f"source {credential_file}.env")
     warnings.append("STS credential files contain secrets; write them only under ignored runtime directories and delete them at closeout")
     return feature(
         "configured",
