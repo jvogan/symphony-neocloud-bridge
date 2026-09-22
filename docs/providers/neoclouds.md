@@ -1,67 +1,40 @@
-# Neocloud / Serverless-GPU Providers
+# Managed inference and neocloud guidance
 
-Compute providers beyond RunPod/Modal/Lambda/AWS. The dominant axis for *unattended* use is
-**self-terminating job (nothing to tear down) vs persistent resource (bills until torn
-down)** - not price or speed. That splits this set into `managed_inference` (token/per-call
-metered, cannot bill forever) and `compute_rental` (a forgotten deployment/pod bills
-forever).
+Last reviewed: 2026-08-30.
 
-All facts below were **researched from official docs (2026-06) and have not yet been run
-through this bridge** - verify on a first smoke before trusting any pattern as a runbook.
+The providers on this page are setup guidance for this bridge. They do not have guarded launch commands in the bridge; provider-native execution remains a separate path and must satisfy its own authorization, budget, artifact, retry, and closeout contract. Their entries capture lifecycle questions that a future adapter must answer without turning changing prices, quotas, or marketing claims into repository policy.
 
-## Slotted providers
+| Provider | Registry adapter | Lifecycle to model | Important boundary |
+| --- | --- | --- | --- |
+| fal | `fal_queue_v1` | Request queue and result retrieval | A request start deadline is not a total inference timeout; retry behavior must be explicit. |
+| Together | `together_v1` | Serverless request or asynchronous batch | Batch completion and output retrieval need an evidence contract; persistent endpoints need separate cleanup. |
+| Replicate | `replicate_prediction_v1` | Prediction or persistent deployment | API prediction data has a limited retention window; deployments can keep capacity active. |
+| Beam | `beam_function_v1` | Function, task queue, or persistent deployment | Keep-warm and deployment settings can leave billable capacity active. |
 
-### fal - fal.ai `fal_queue_v1` (managed_inference)
-The cleanest stateless primitive surveyed: `POST queue.fal.run/{model} -> request_id ->
-poll -> GET result`; queue wait is free, nothing to tear down. Per-request controls
-`X-Fal-Request-Timeout` / `X-Fal-No-Retry` (auto-retry is ON by default) /
-`X-Fal-Object-Lifecycle-Preference`. **Output artifact URLs are PUBLIC by default - set a
-lifecycle.** Gen-media-first.
+## fal
 
-### together - Together AI `together_v1` (managed_inference)
-The only surveyed provider with a true **async Batch API** (file-submit -> poll -> download,
-~50% cost, 30B-token/job ceiling). Token-metered, OpenAI-compatible. Nothing to tear down on
-serverless/batch; a `dedicated` endpoint is the exception (per-minute, **no minimum**, but
-bills continuously while running until explicitly stopped).
+The queue API returns a request identifier that can be polled until a result is available. `X-Fal-Request-Timeout` controls how long a request may wait to start, not the full inference duration. The platform documents automatic retries and an `X-Fal-No-Retry` override. A bridge adapter should record retry policy, total supervision time, result lifecycle, and output hashes.
 
-### replicate - Replicate `replicate_prediction_v1` (managed_inference)
-Run any model (Cog) via async REST + webhooks. Plain predictions self-terminate (30-min
-auto-timeout); **`deployments` with min_instances>=1 bill until set to 0 / deleted**, and
-**output artifacts are auto-deleted after ~1 hour** (fetch promptly). Cloudflare announced
-acquiring Replicate (Nov 2025, expected to close early 2026) - surface is shifting.
+Sources: [queue API](https://fal.ai/docs/documentation/model-apis/inference/queue), [retries](https://fal.ai/docs/documentation/serverless/reliability/retries).
 
-### beam - Beam (beam.cloud) `beam_function_v1` (compute_rental)
-Modal-class arbitrary containers on a real GPU (Python decorators + CLI, per-second billing,
-~2-3s cold starts). **Idle-billing trap:** `keep_warm_seconds` bills after each request
-(defaults: endpoints 180s, task queues 10s, **pods 600s**); pods are VM-like (no
-scale-to-zero). Teardown = `keep_warm_seconds=0` + undeploy.
+## Together
 
-## Considered, not separate provider entries
+Together documents an asynchronous Batch API built around uploaded input, batch submission, status polling, and output retrieval. A future adapter should distinguish stateless requests and batches from any persistent endpoint product, and it should validate returned outputs before closeout.
 
-- **Fireworks / Groq / Cerebras** - ultra-fast token-metered LLM inference APIs with batch
-  discounts and free tiers; **nothing to clean up.** Add one as a zero-cleanup "fast LLM"
-  provider entry if/when an LLM-inference workload appears. (HuggingFace Inference Providers already
-  routes to several of these behind one token - see `docs/providers/huggingface.md`.)
-- **Cloudflare Workers AI** - "Neurons" billing, edge, idle-safe; increasingly relevant now
-  that Cloudflare owns Replicate.
-- **Vast.ai / Hyperbolic / Prime Intellect** - cheapest GPUs, but **bill-forever VM/
-  marketplace rentals** with variable host reliability; interruptibles can die on ~15s
-  notice. **Do NOT add as a default** - only behind a hard TTL auto-terminate, never for
-  unattended work where cleanup must be guaranteed.
-- **Baseten** - production serving (Truss); scale-to-zero serverless is bridge-appropriate,
-  but **dedicated deployments bill continuously and have 16-90s cold starts** (wrong for
-  short canaries). Only its serverless path would need a separate provider entry.
+Source: [Together Batch API](https://docs.together.ai/docs/inference/batch/overview).
 
-## Closeout by category
+## Replicate
 
-- **managed_inference (fal/together/replicate):** no resource to delete; fetch + hash the
-  artifact within its retention window, bound spend by per-call/token price. The only
-  teardown targets are the *persistent exceptions* - a Replicate deployment, a Together
-  dedicated instance - which must be recorded and torn down.
-- **compute_rental (beam):** closeout must undeploy the endpoint/queue/pod AND confirm
-  `keep_warm` left no warm container billing - two checks, like a rented machine.
+Replicate predictions have a bounded lifecycle and API-created prediction data is retained for a limited period by default. Artifact retrieval must therefore happen promptly. Deployments are a separate persistent surface; setting minimum and maximum instances to zero disables a deployment and stops its serving capacity.
 
-## Sources
-replicate.com docs; fal.ai docs (queue, lifecycle headers); together.ai (Batch API);
-beam.cloud docs (keep_warm_seconds); fireworks.ai / groq.com / cerebras.ai; vast.ai.
-Researched 2026-06; pricing is list-rate and drifts - re-verify at integration time.
+Sources: [prediction lifecycle](https://replicate.com/docs/topics/predictions/lifecycle/), [data retention](https://replicate.com/docs/topics/predictions/data-retention/), [deployment controls](https://replicate.com/docs/topics/deployments/view-deployments).
+
+## Beam
+
+Beam exposes functions, task queues, endpoints, and other deployment shapes. Its keep-warm configuration affects how long capacity remains available after work. A future adapter must make that setting visible, undeploy persistent resources when required, and verify that closeout leaves no unintended warm capacity.
+
+Source: [Beam keep-warm configuration](https://docs.beam.cloud/v2/endpoint/keep-warm).
+
+## Promotion requirements
+
+Before any of these entries becomes automated, add a provider-specific client and tests for authorization, spend limits, duplicate suppression, terminal-state handling, artifact retrieval, retries, and cleanup. Then update the registry support label. Documentation alone is never launch authorization.

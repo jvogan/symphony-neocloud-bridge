@@ -33,7 +33,7 @@ Checked against official RunPod docs and blog posts on 2026-05-03; rechecked rou
 - RunPod agent skills: https://docs.runpod.io/get-started/agent-skills
 - RunPod MCP servers: https://docs.runpod.io/get-started/mcp-servers
 - RunPod CLI overview: https://docs.runpod.io/runpodctl/overview
-- RunPod CLI pods, including `--stop-after` and `--terminate-after`: https://docs.runpod.io/runpodctl/reference/runpodctl-pod
+- RunPod CLI Pod reference: https://docs.runpod.io/runpodctl/reference/runpodctl-pod. Check [CLI releases](https://github.com/runpod/runpodctl/releases) for compatibility; v2.12.0 removed the former stop/terminate creation flags.
 - RunPod CLI pod create flags, including `--registry-auth-id`: https://docs.runpod.io/runpodctl/reference/runpodctl-create-pod
 - RunPod CLI billing for pods, serverless, and network volumes: https://docs.runpod.io/runpodctl/reference/runpodctl-billing
 - RunPod CLI SSH info: https://docs.runpod.io/runpodctl/reference/runpodctl-ssh
@@ -65,7 +65,7 @@ Checked against official RunPod docs and blog posts on 2026-05-03; rechecked rou
 - Negative GraphQL `runtime.uptimeInSeconds` is not documented as a normal state. The bridge treats it as invalid provider telemetry or pod-agent trouble and fails closed unless workload-level evidence is available.
 - Serverless endpoint closeout should prefer `GET /billing/endpoints`; network volume retention should prefer `GET /billing/networkvolumes`.
 - When `runpodctl` is installed and configured, it can fetch SSH commands and billing history without the bridge carrying another REST adapter path for those reads.
-- `budget.terminate_after_minutes` maps to `runpodctl pod create --terminate-after`; the REST create path currently records the backstop but does not enforce it platform-side.
+- `budget.terminate_after_minutes` is an orchestrator cleanup deadline. Neither the current CLI nor REST create path enforces it provider-side.
 - RunPod network-volume S3 uses datacenter-specific endpoints such as `https://s3api-us-ks-2.runpod.io/` and separate S3 API credentials, not `RUNPOD_API_KEY`.
 - RunPod network-volume S3 maps Pod `/workspace/path` to `s3://NETWORK_VOLUME_ID/path`; use exact `head-object`/`cp` checks for declared archives instead of recursive listing as primary proof on large directories.
 - The current `runpodctl pod` and official runpodctl reference cover create/list/get/start/stop/restart/reset/update/delete; the bridge should not promise generic pod log streaming or in-pod exec through runpodctl. Use workload `/healthz`, artifact packets, or SSH/SCP where the manifest declares them.

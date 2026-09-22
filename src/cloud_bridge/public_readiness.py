@@ -12,10 +12,12 @@ from .manifest import load_manifest, validate_manifest
 
 
 BRIDGE_ROOT = Path(__file__).resolve().parents[2]
-SCAN_GLOBS = ("*.md", "*.json", "*.toml", "*.yaml", "*.yml", "*.py", "*.sh", "*.txt")
+SCAN_GLOBS = ("*.md", "*.json", "*.toml", "*.yaml", "*.yml", "*.py", "*.sh", "*.txt", "*.svg", "*.excalidraw")
 SCAN_DIRS = (
     "README.md",
     "AGENTS.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
     "docs",
     "templates",
     "skills",

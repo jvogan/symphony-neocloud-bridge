@@ -303,7 +303,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_registry_auth_plan_renders_ecr_refresh(self):
         manifest = load_manifest(ROOT / "examples" / "public-smoke" / "launch_manifest.json")
-        manifest["runpod"]["imageName"] = "123456789012.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha"
+        manifest["runpod"]["imageName"] = "000000000000.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha"
         manifest["aws"] = {"ecr": {"runpod_registry_auth_name": "runpod-ecr-smoke"}}
         plan = build_registry_auth_plan(manifest)
         self.assertFalse(plan["ok"], plan)
@@ -833,7 +833,7 @@ class BridgeTests(unittest.TestCase):
                 "bytes": 16,
                 "truncated": False,
                 "text": redact_sensitive_text(
-                    ("HF_" + "TOK" + "EN=hf_1234567890abcdef\nAuthorization: " + "Bear" + "er progress-secret-token"),
+                    ("HF_" + "TOK" + "EN=" + "hf_" + "1234567890abcdef\nAuthorization: " + "Bear" + "er progress-secret-token"),
                     redact_tokens or [],
                 ),
             }
@@ -869,7 +869,7 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(seen["redact_tokens"], ["progress-secret-token"])
         self.assertIn("log_tail", report)
         self.assertNotIn("progress-secret-token", report["log_tail"]["text"])
-        self.assertNotIn("hf_1234567890abcdef", report["log_tail"]["text"])
+        self.assertNotIn(("hf_" + "1234567890abcdef"), report["log_tail"]["text"])
 
     def test_fetch_live_progress_skips_log_tail_without_auth_token(self):
         manifest = self.manifest()
@@ -1424,11 +1424,11 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(preflight["ok"])
         self.assertTrue(any(issue["path"] == "runpod.create_request" for issue in preflight["errors"]))
 
-    def test_render_runpodctl_create_includes_terminate_backstop(self):
+    def test_render_runpodctl_create_omits_removed_lifecycle_flags(self):
         manifest = load_manifest(ROOT / "examples" / "cheap-pod" / "launch_manifest.json")
         command = build_pod_create_command(manifest)
-        self.assertIn("--terminate-after", command)
-        self.assertIn("15m", command)
+        self.assertNotIn("--terminate-after", command)
+        self.assertNotIn("--stop-after", command)
         self.assertIn("--image", command)
         self.assertIn("--docker-args", command)
         self.assertTrue(any("RUNPOD_VALIDATION_SCRIPT" in item for item in command))
@@ -2712,10 +2712,10 @@ class BridgeTests(unittest.TestCase):
             {
                 "destination_uri": "s3://runpod-artifacts/runs/aws-plan",
                 "destination_uri_ref": "",
-                "credentials_ref": "aws-sts:arn:aws:iam::123456789012:role/runpod-artifact-upload",
+                "credentials_ref": "aws-sts:arn:aws:iam::000000000000:role/runpod-artifact-upload",
             }
         )
-        manifest["runpod"]["imageName"] = "123456789012.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha"
+        manifest["runpod"]["imageName"] = "000000000000.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha"
         manifest["runpod"]["env"]["RUNTIME_SECRET_REF"] = "aws-sm:runpod/demo/secret"
         manifest["aws"] = {
             "region_ref": "env:AWS_REGION",

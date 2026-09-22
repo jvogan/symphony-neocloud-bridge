@@ -12,7 +12,7 @@ class RunpodAdapter(ProviderAdapter):
     adapter_id = "runpod_pod_v1"
     automated_launch = True
     provenance = "automated launch support through this bridge's guarded CLI"
-    summary = "Pod lifecycle via RunPod REST + GraphQL with guarded launch, monitoring, artifact, and cleanup commands."
+    summary = "Guarded Pod lifecycle through REST API v1, with read-only GraphQL telemetry, artifact verification, and cleanup."
     learnings_doc = "docs/providers/runpod.md"
     roadmap = ["runpod_flash_v1", "runpod_serverless_v1", "runpod_cluster_v1"]
 

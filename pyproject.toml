@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "symphony-cloud-bridge"
 dynamic = ["version"]
-description = "Skills and runbooks for your AI agent to use cloud compute on your technical projects: manifests, preflight checks, artifact proof, cost limits, and cleanup for RunPod, HF Jobs, AWS, Modal, Lambda, and more"
+description = "Cloud compute tools for AI-agent research and engineering workflows"
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
-keywords = ["cloud", "runpod", "modal", "lambda", "aws", "symphony", "linear", "codex", "automation"]
+keywords = ["cloud", "neocloud", "runpod", "huggingface", "ai-agents", "research", "automation"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",

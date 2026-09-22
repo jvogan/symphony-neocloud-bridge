@@ -1,53 +1,37 @@
-# Product Brief
+# Product brief
 
-## Name
+Neocloud Bridge gives AI agents reusable tools for cloud execution. Agents supply workload commands and expected results; the bridge manages supported provider runs and returns validated artifacts, costs, and cleanup records.
 
-Symphony Cloud Bridge
+## Who uses it
 
-## Purpose
+- Researchers running biological data analysis, model evaluation, or simulations with an AI agent.
+- Developers connecting local tools, cloud jobs, and managed inference in one workflow.
+- Teams that need repeatable run contracts across projects and compute providers.
+- Contributors adding provider guides or executable adapters.
 
-Provide a reusable, contract-driven RunPod lane for Symphony + Linear campaigns.
+## Capabilities
 
-## User Story
+| Need | Bridge capability |
+| --- | --- |
+| Choose compute | Provider references, execution-model comparisons, and compute directories |
+| Prepare a run | Manifest validation, contract self-check, local preflight, and provider-specific planning |
+| Execute work | Automated RunPod Pods and one-shot Hugging Face Jobs |
+| Connect tools | Ordered commands, output contracts, validation commands, and artifact hashes |
+| Recover work | Run records, workload monitoring, checkpoint declarations, and recovery guidance |
+| Account for resources | Spend limits, cost records, cancellation or termination, and retention records |
 
-An operator has a Linear issue that says a workload should run on RunPod. A Symphony Codex worker validates the local contract, starts or creates the pod only when authorized, runs the startup workload, captures proof artifacts, stops/deletes resources, and writes a parseable outcome block.
+## Workflow ownership
 
-## Product Unit
+Your agent or workflow engine sequences stages, selects scientific tools, and evaluates their results. The bridge executes each supported provider run. A stage can contain several commands; workflows that span providers use separate manifests and pass validated artifacts between runs.
 
-A remote execution packet:
+The [research-table example](../examples/research-table-qc/) demonstrates a local chain with a synthetic expression matrix, a machine-readable summary, and a report. The [agent workflow guide](agent-workflows.md) shows how to structure larger projects around the same artifact handoffs.
 
-```text
-runpod-execution/
-  launch_manifest.json
-  provider_handoff.json
-  startup.sh
-  local_preflight.json
-  monitor_events.ndjson
-  status.json
-  egress_status.json
-  runpod_resource_record.json
-  logs/
-  artifacts/
-  artifact_hashes.jsonl
-  closeout.json
-  symphony_outcome.md
-```
+## Success criteria
 
-## Success Criteria
+A completed run has the required artifacts, passing validation, recorded hashes, cost evidence, and verified cleanup or approved retention. Provider status and workload progress remain separate observations. Provider capability output matches executable adapter support.
 
-- Manifest validation catches missing authorization, budget, cleanup, expected artifacts, validation commands, monitoring contract, artifact egress, and secret-like literal env vars.
-- Local dry-run can render a launch packet, provider handoff, startup scripts, and expected closeout without touching RunPod.
-- Authorized pod smoke can create or start a RunPod pod through an audited request, record pod ID, image, region/data center, runtime, cost estimate, and cleanup status.
-- Symphony workers can poll pod state without owning mutation rights, and only one worker can own launch/cleanup for a run.
-- Trusted orchestrators can consume `provider_handoff.json` packets, apply launch locks, query billing, render dashboards, and run recovery cleanup.
-- Large workloads have explicit profile, checkpoint, durable egress, and supervisor recommendations before paid launch.
-- Success is blocked unless declared artifact checks pass.
+## Integrations
 
-## Out Of Scope For V1
+The CLI works with agents that can invoke shell commands. The bundled skill provides the same workflow as agent instructions. Optional AWS features render orchestration plans for storage, registry access, queues, locks, and cleanup schedules. Symphony and Linear provide optional dispatch and issue-tracking integration.
 
-- Autonomous private data sync
-- Long-lived production service orchestration
-- Kubernetes
-- Full non-RunPod provider adapters
-- GxP/GMP package generation
-- Domain science or model interpretation
+The existing package name, skill invocation, manifest fields, and outcome format remain compatible with existing installations.

@@ -1,0 +1,49 @@
+# Compute landscape
+
+This page compares provider compute surfaces by workload fit and by the resources that must be stopped, deleted, or copied out at closeout.
+
+Last reviewed: 2026-09-22.
+
+Provider APIs, prices, regions, quotas, and feature flags change. These rows summarize public primary documentation reviewed on that date; they do not establish current capacity or pricing.
+
+## Bridge support boundary
+
+Provider capability and bridge support are separate. The repository has guarded automated paths for RunPod Pods and one-shot Hugging Face Jobs. The other rows are research candidates or setup guidance. A research candidate needs a guarded adapter and an explicit artifact, cost, and cleanup contract before the bridge can launch it.
+
+## Implemented bridge surfaces
+
+RunPod uses `runpod_pod_v1`; REST v1 retires on **2026-11-15**. Hugging Face uses `huggingface_v1` for one-shot Jobs. See the [support matrix](README.md) for adapter details.
+
+| Provider | Compute model and fit | Lifecycle and cleanup checkpoint | Primary sources |
+| --- | --- | --- | --- |
+| RunPod | GPU/CPU Pods for containerized jobs or services, with local or network volumes. See the [Pod API](https://docs.runpod.io/pods). | Stopping releases the assigned GPU but leaves a local volume on its physical machine; a later restart may have no GPU capacity. Copy artifacts before terminating the Pod. Network volumes can be reattached independently. | [RunPod provider reference](runpod.md), [zero-GPU troubleshooting](https://docs.runpod.io/pods/troubleshooting/zero-gpus) |
+| Hugging Face Jobs | One-shot container Jobs with selected hardware and Hub-backed artifact egress. | Observe the Job to a terminal state, cancel on a local timeout, and copy outputs outside the ephemeral Job filesystem. | [Hugging Face provider reference](huggingface.md), [Jobs overview](https://huggingface.co/docs/hub/jobs), [Jobs reference](https://huggingface.co/docs/hub/jobs-reference) |
+
+## Research candidates
+
+These providers document useful compute surfaces, but the bridge has no guarded adapter for the rows in this table.
+
+| Provider | Compute model and fit | Lifecycle and cleanup checkpoint | Primary sources |
+| --- | --- | --- | --- |
+| CoreWeave | Managed Kubernetes on bare metal with GPU/CPU servers and HPC networking; a fit for distributed training, inference, and HPC workloads. | CKS workloads and Distributed File Storage (DFS) have separate lifecycles. DFS is cluster-scoped; deleting a PVC soft-deletes its backing volume for a default retention window before permanent deletion, so remove PVCs and storage deliberately. | [CoreWeave Kubernetes Service](https://docs.coreweave.com/products/cks), [Distributed File Storage](https://docs.coreweave.com/products/storage/distributed-file-storage/about) |
+| Nebius | GPU and InfiniBand VMs, managed Kubernetes, and Slurm/Soperator clusters; a fit for GPU workloads and distributed training. | Instance recovery policy can restart a VM after host or guest failure, and a recovered VM can incur usage. Disks and filesystems can have deletion protection and must be detached before deletion. | [Compute](https://docs.nebius.com/compute), [instance resource](https://docs.nebius.com/terraform-provider/reference/resources/compute_v1alpha1_instance), [storage management](https://docs.nebius.com/compute/storage/manage) |
+| Crusoe | Virtual machines and local or shared disk types for containerized CPU/GPU jobs and cluster nodes. | Ephemeral disks are erased after a physical reboot, VM stop and restart, or failure. Persistent and shared disks survive stop/detach and continue to need explicit deletion, including when unattached. | [Virtual machines](https://docs.crusoecloud.com/compute/virtual-machines/), [disk storage](https://docs.crusoecloud.com/storage/disks/overview/) |
+| Vast.ai | Marketplace-rented GPU instances; a fit for interactive experiments and short single-node jobs. | Stopping preserves instance data but storage charges continue; destroying an instance permanently removes its data. Restarting a stopped instance can wait for available GPU capacity, so export artifacts before destroy. | [Manage instances](https://docs.vast.ai/guides/instances/manage-instances) |
+| TensorDock | Location- or hostnode-selected GPU-accelerated VMs with explicit CPU, RAM, storage, GPU, and cloud-init settings. | The API exposes start, stop, modify, and delete. Stopped usage has a separate charge in the dashboard, and spot instances can be interrupted; delete the VM after artifact egress. | [Instance creation](https://dashboard.tensordock.com/api/docs/instance-creation), [instance management](https://dashboard.tensordock.com/api/docs/instance-management), [spot instances](https://docs.tensordock.com/virtual-machines/spot-instances), [dashboard](https://production.dashboard.tensordock.com/deploy) |
+| Fluidstack | Managed Kubernetes on bare metal, managed Slurm, and region/project-scoped instances; a fit for multi-node training and inference. | Instance creation exposes `preemptible` and `ephemeral` choices. Instances, clusters, and projects have separate lifecycles; record and close every resource created for the run. | [Platform documentation](https://docs.fluidstack.io/), [infrastructure API](https://docs.fluidstack.io/api/infrastructure/), [management API](https://docs.fluidstack.io/api-reference/management-api) |
+| Baseten | Managed model deployments and Chainlets with per-component GPU instance types and autoscaling; a fit for production model inference and multi-model Chains. | Deactivate production or environment deployments deliberately. Changing Chainlet instance settings redeploys the component; queued asynchronous requests can be canceled only while queued, so persist completed outputs before deactivation. | [Chainlet instance settings](https://docs.baseten.co/reference/management-api/environments/update-a-chainlet-environments-instance-type-settings), [deactivate a production deployment](https://docs.baseten.co/reference/management-api/deployments/deactivate/deactivates-production-deployment), [cancel an async request](https://docs.baseten.co/api-reference/cancel-async-request) |
+| Fireworks | Serverless model inference, autoscaled private GPU deployments, and training or batch surfaces; a fit for managed LLM, vision, and audio workloads. | Dedicated deployments and other named resources have explicit delete operations. Treat batch and fine-tuning outputs as artifacts and retrieve them before deleting their resources. | [Fireworks documentation](https://docs.fireworks.ai/), [inference options](https://docs.fireworks.ai/getting-started/introduction), [delete resources](https://docs.fireworks.ai/tools-sdks/firectl/commands/delete-resources) |
+
+## Documented comparison set
+
+These providers are documented in the repository as setup guidance. RunPod appears in the implemented table because it is the one provider in this comparison set with a guarded Pod path.
+
+| Provider | Compute model and fit | Lifecycle and cleanup checkpoint | Primary sources |
+| --- | --- | --- | --- |
+| Modal | Serverless Python Functions and Apps with autoscaling; a fit for bursty Python jobs, batch fan-out, and inference. | Functions scale to zero by default; minimum-container settings retain warm capacity. Detached runs can outlive the client; deployed Apps persist until stopped. Volumes need separate retention or deletion. | [Functions](https://modal.com/docs/guide/functions), [Apps](https://modal.com/docs/guide/apps), [autoscaling](https://modal.com/docs/guide/scale), [Volumes](https://modal.com/docs/guide/volumes) |
+| Beam | Serverless container functions, endpoints, task queues, and GPU-backed applications; a fit for HTTP inference and queued tasks. | `keep_warm_seconds` and `min_containers` keep billable containers alive. Previous deployment versions can remain active after a redeploy until explicitly stopped. | [Keep-warm behavior](https://docs.beam.cloud/v2/endpoint/keep-warm) |
+| Replicate | Managed predictions and custom model deployments; a fit for model API workloads. | API prediction inputs, outputs, files, and logs expire after one hour by default, so copy results promptly. Set deployment minimum and maximum instances to zero or disable the deployment to stop new work and billing, then delete it when no longer needed. | [Prediction data retention](https://replicate.com/docs/topics/predictions/data-retention), [deployment controls](https://replicate.com/docs/topics/deployments/view-deployments) |
+| fal | Durable asynchronous inference queues and serverless custom app runners; a fit for request-oriented inference and media workloads. | Queue retries, cancellation, and result retrieval are request-level concerns. Runner keep-alive and shutdown settings control compute lifetime; fetch media before provider URLs expire. | [Queue](https://fal.ai/docs/documentation/model-apis/inference/queue), [serverless app lifespan](https://fal.ai/docs/documentation/getting-started/lifespan), [retries](https://fal.ai/docs/documentation/serverless/reliability/retries) |
+| Together | Shared serverless models, provisioned throughput, dedicated model endpoints, and GPU clusters; a fit for managed LLM inference, batch work, and dedicated serving. | Batch runs produce output and error files that must both be retrieved. Scale down or delete dedicated endpoints after egress; completed batch requests can remain billable. | [Inference modes](https://docs.together.ai/docs/inference/overview), [batch management](https://docs.together.ai/docs/inference/batch/manage), [dedicated endpoints](https://docs.together.ai/docs/dedicated-endpoints/overview), [GPU clusters](https://docs.together.ai/docs/gpu-clusters-overview) |
+
+For candidate discovery, use the [compute directories](compute-directories.md). To compare complete costs and plan retries, storage, and cleanup, use the [selection guide](selection-guide.md).

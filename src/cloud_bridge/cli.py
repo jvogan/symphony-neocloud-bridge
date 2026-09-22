@@ -839,11 +839,8 @@ def _run(argv: list[str] | None = None) -> int:
             sys.stdout.write(json.dumps(rows, indent=2, sort_keys=True) + "\n")
         else:
             for row in rows:
-                if row["automated_launch"]:
-                    flag = "launch:auto"
-                else:
-                    flag = "setup:guide"
-                print(f"{row['provider']:11} [{flag:14}] {row['adapter']} ({row.get('category','')}): {row['summary']}")
+                label = "[automated]" if row["automated_launch"] else "[setup-guidance]"
+                print(f"{row['provider']:11} {label:16} {row['adapter']} ({row.get('category', '')}): {row['summary']}")
         return 0
 
     if args.command == "provider-capabilities":

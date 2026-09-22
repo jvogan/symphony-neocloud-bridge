@@ -1,222 +1,94 @@
 <p align="center">
-  <img src="docs/assets/banner.jpg" alt="Symphony Neocloud Bridge" width="100%">
+  <img src="docs/assets/banner-neocloud.png" alt="Neocloud Bridge — an indigo dragon forms a bridge between cloud compute islands" width="100%">
 </p>
 
-# Symphony Neocloud Bridge
+# Neocloud Bridge
 
-Make cloud compute usable by AI agents.
+Neocloud Bridge helps AI agents use cloud compute for demanding research and engineering tasks. It combines provider guides, workload manifests, launch tools, and result checks so agents can run work on cloud CPUs and GPUs and bring usable artifacts back.
 
-AI agents can write the workload, but cloud providers still expect an operator. Symphony Neocloud Bridge gives agents that operator layer: choose the right compute, check that launch is allowed, prepare source safely, run the provider workflow, bring artifacts back, record cost, and prove cleanup.
+Use it for biological data analysis, model evaluation, simulations, and multi-stage tool chains. Your agent chooses the tools and sequences the work; the bridge handles each supported cloud run, including spending limits, output retrieval, and cleanup.
 
-It connects an agent's task to compute you already have on providers such as RunPod, Hugging Face Jobs, AWS, Modal, Lambda, and Beam.
+## What agents can do
 
-Inside are launch manifests, provider setup notes, local preflight checks, startup templates, handoff packets, artifact checks, cost limits, cleanup rules, and learning notes. The bridge also marks which provider paths have automated launch support so agents do not attempt paid actions where the toolkit only contains guidance. Run `cloud-bridge providers` to see the current coverage.
+| Capability | What you get |
+| --- | --- |
+| Find suitable compute | Provider comparisons and searchable catalogs, with memory, runtime, storage, and lifecycle considerations |
+| Move demanding work off the laptop | Automated RunPod Pod and Hugging Face Job execution; setup guides for additional clouds and inference APIs |
+| Chain tools through files | Ordered workload commands, declared output files, validation commands, and hashes for downstream inputs |
+| Run larger experiments | Shard and checkpoint contracts, monitoring, and recovery records for workflows defined by your project |
+| Make results reproducible | Exact commands, source references, logs, validated artifacts, and cost and cleanup records |
 
-## How it works
+![Six stages of a bridge run: define, prepare, launch, observe, verify, and close](docs/assets/bridge-lifecycle.svg)
 
-Symphony, an agent orchestrator, assigns a task from your Linear issue tracker to an agent. The agent uses this bridge to start the job on a provider, follow it while it runs, bring back the results, and shut the machine down when it is done.
+## Biological research and tool chaining
 
-```text
-Linear issue
-  -> Symphony Codex worker
-  -> local preflight
-  -> provider workflow
-  -> startup workload
-  -> logs/artifacts/hashes
-  -> cleanup
-  -> Linear symphony-outcome
-```
+A research workflow often needs several kinds of compute. An agent can prepare data on a CPU, run a model on a GPU, and summarize the outputs locally. Each stage names the files it consumes and produces, so the next tool can check its inputs before running.
 
-## Cloud Setups
+| Research task | Example tool chain | Useful outputs |
+| --- | --- | --- |
+| Expression-table quality checks | Parse a count matrix → check structure and counts → summarize samples → render a report | Input hash, sample totals, and a quality-check report |
+| Microscopy analysis | Prepare image batches → run project-selected image analysis → aggregate measurements | Measurement tables, masks, and review images |
+| Protein structure analysis | Prepare existing structures → run project-selected analysis tools → compare outputs | Per-structure measurements, figures, and provenance |
+| Model evaluation | Partition a dataset → run evaluations → validate results → assemble a comparison | Per-run metrics, logs, and a comparison table |
 
-The repo is organized around cloud surfaces an agent may need to use. Each provider area captures setup guidance, launch constraints, monitoring expectations, artifact movement, cost boundaries, and cleanup proof. See [docs/providers/](docs/providers/) and [docs/provider-adapter-contract.md](docs/provider-adapter-contract.md) for details.
+The [expression-table example](examples/research-table-qc/) runs locally with synthetic data. The other rows illustrate workflows you can supply from your own project. The [agent workflow guide](docs/agent-workflows.md) explains how to connect stages and reuse their artifacts.
 
-| Provider area | Cloud surfaces |
-|---|---|
-| Pod and VM rental | RunPod · Lambda Cloud · AWS · Beam |
-| Function and batch compute | Hugging Face Jobs · Modal · Kaggle · GCP/Vertex |
-| Managed inference APIs | Boltz · ESM · NVIDIA NIM · Replicate · fal · Together |
-| Cloud glue | S3/object-store egress · secret references · launch locks · cleanup backstops |
+## Run a working example
 
-Each setup is shaped around the same questions: what can the agent launch, what must be proven before spend, how progress is observed, where artifacts land, how hashes are recorded, and what cleanup proof closes the loop.
-
-Agents can record problems they hit with a provider and search those notes later, so the same issue is not solved twice (`cloud-bridge learnings`). See [skills/cloud-symphony/references/self-learning.md](skills/cloud-symphony/references/self-learning.md).
-
-## What Agents Get
-
-- A way to turn a Linear issue and repo-defined workload into a checked launch packet.
-- Dry-run commands that catch missing auth, mutable source, missing artifacts, unsafe egress, and cleanup gaps before paid resources are touched.
-- Provider-specific notes for source ingress, registry auth, startup commands, progress checks, artifact pullback, billing, and teardown.
-- A consistent closeout shape: status, artifacts, hashes, cost notes, cleanup state, and `symphony-outcome`.
-- A learning loop for agents to record cloud-specific gotchas without hardcoding them into domain repos.
-
-## Scope
-
-This bridge is domain-agnostic. It should work for:
-
-- scientific and engineering batch jobs
-- model evaluation or adapter jobs
-- dataset preprocessing lanes
-- figure, report, and artifact-generation lanes
-- any Symphony + Linear workflow that can declare commands, validation checks, and artifacts
-
-Domain repos define workload commands and success artifacts. This bridge validates and executes the remote compute contract.
-
-## Non-Negotiables
-
-- No false success: remote run success requires declared artifacts and checks, not just pod lifecycle events.
-- Remote launch is opt-in and must be explicitly authorized.
-- Secrets stay in secure stores or runtime injection, never templates or repo files.
-- Cleanup status is part of the outcome.
-- Local dry-run must be possible without any cloud provider.
-
-## Starting Artifacts
-
-- [skills/cloud-symphony/SKILL.md](skills/cloud-symphony/SKILL.md)
-- [docs/product-brief.md](docs/product-brief.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/runpod-worker-readiness.md](docs/runpod-worker-readiness.md)
-- [docs/runpod-observability-ladder.md](docs/runpod-observability-ladder.md)
-- [docs/provider-adapter-contract.md](docs/provider-adapter-contract.md)
-- [docs/private-source-storage-runbook.md](docs/private-source-storage-runbook.md)
-- [docs/runpod-official-surfaces.md](docs/runpod-official-surfaces.md)
-- [docs/runpod-superpowers-2026-05.md](docs/runpod-superpowers-2026-05.md)
-- [docs/aws-runpod-superpowers.md](docs/aws-runpod-superpowers.md)
-- [docs/discovery.md](docs/discovery.md)
-- [templates/runpod-launch-manifest.template.json](templates/runpod-launch-manifest.template.json)
-- [templates/linear-runpod-issue.md](templates/linear-runpod-issue.md)
-- [templates/symphony-outcome.md](templates/symphony-outcome.md)
-- [docs/public-release-checklist.md](docs/public-release-checklist.md)
-- [docs/remote-smoke-runbook.md](docs/remote-smoke-runbook.md)
-
-## Local CLI
-
-The bridge has a local-first stdlib Python CLI. Run it from the repo with:
+From this repository, Python 3.10 or newer is enough:
 
 ```bash
-bin/cloud-bridge validate-manifest templates/runpod-launch-manifest.template.json
-bin/cloud-bridge audit-manifests .
-bin/cloud-bridge contract-self-check examples/huge-sharded/launch_manifest.json
-bin/cloud-bridge doctor
-bin/cloud-bridge public-audit
-bin/cloud-bridge provider-capabilities runpod
-bin/cloud-bridge gpu-catalog --gpu-type-id "NVIDIA A100-SXM4-80GB" --data-center-id US-KS-2 --cloud-type SECURE --json
-bin/cloud-bridge aws-orchestrator-plan examples/huge-sharded/launch_manifest.json
-bin/cloud-bridge aws-orchestrator-plan examples/aws-orchestrated/launch_manifest.json
-bin/cloud-bridge productivity-plan examples/proxy-matrix/launch_manifest.json
-bin/cloud-bridge source-check examples/cheap-pod/launch_manifest.json
-bin/cloud-bridge egress-plan examples/runpod-network-volume-s3/launch_manifest.json
-bin/cloud-bridge profiles
-bin/cloud-bridge validate-linear-issue examples/proxy-matrix/linear_issue.md
-bin/cloud-bridge linear-issue TEAM-123 --out .runtime/TEAM-123.md
-bin/cloud-bridge issue-intake examples/proxy-matrix/linear_issue.md --manifest examples/proxy-matrix/launch_manifest.json --out-dir .runtime/proxy-matrix-intake
-bin/cloud-bridge preflight examples/huge-sharded/launch_manifest.json
-bin/cloud-bridge egress-plan examples/huge-sharded/launch_manifest.json
-bin/cloud-bridge plan examples/public-smoke/launch_manifest.json
-bin/cloud-bridge plan examples/cheap-pod/launch_manifest.json
-bin/cloud-bridge plan examples/proxy-matrix/launch_manifest.json
-bin/cloud-bridge prepare examples/cheap-pod/launch_manifest.json --out-dir .runtime/cheap-pod-packet
-bin/cloud-bridge render-runpodctl-create examples/cheap-pod/launch_manifest.json
-bin/cloud-bridge prepare examples/proxy-matrix/launch_manifest.json --out-dir .runtime/proxy-matrix-packet
-bin/cloud-bridge validate-handoff .runtime/proxy-matrix-packet/provider_handoff.json || test $? -eq 1
-bin/cloud-bridge plan examples/small-cpu/launch_manifest.json
-bin/cloud-bridge render-startup examples/small-cpu/launch_manifest.json --out .runtime/startup.sh
-bin/cloud-bridge run-local examples/cheap-pod/launch_manifest.json --repo-dir .runtime/cheap-pod-repo --runtime-dir .runtime/cheap-pod-run
-bin/cloud-bridge run-local examples/proxy-matrix/launch_manifest.json --repo-dir .runtime/proxy-matrix-repo --runtime-dir .runtime/proxy-matrix-run
-bin/cloud-bridge create-pod examples/cheap-pod/launch_manifest.json --out-dir .runtime/cheap-pod-remote || test $? -eq 2
+bin/cloud-bridge providers
+bin/cloud-bridge validate-manifest examples/research-table-qc/launch_manifest.json
+bin/cloud-bridge contract-self-check examples/research-table-qc/launch_manifest.json
+python3 examples/research-table-qc/run_example.py
 ```
 
-After a run has produced `runpod-execution/status.json` and heartbeats, inspect it with:
+The example creates a fresh workspace under `.runtime/`, checks a synthetic count table, and prints the report path. Each run preserves `qc.json`, `report.md`, and artifact hashes. It uses local Python and requires no cloud account. See the [example guide](examples/research-table-qc/) for expected values and output paths.
 
-```bash
-bin/cloud-bridge monitor examples/small-cpu/launch_manifest.json --base-dir .
-bin/cloud-bridge supervise examples/small-cpu/launch_manifest.json --base-dir .
-```
+For an installed CLI, run `python -m pip install -e .`.
 
-For remote monitor updates, run repeated `bin/cloud-bridge progress-report ... --previous ...` samples and report `classification.state` verbatim with the classification booleans; do not summarize monitor liveness as workload progress.
+## Choose a provider
 
-Remote creation is guarded. `create-pod` writes an audited request/resource record without touching RunPod by default, and actual creation requires `remote_launch_allowed: true`, explicit `launch_authorization`, an immutable repo reference, a passing `contract-self-check` with route proof, `RUNPOD_API_KEY`, no active duplicate pod prefix, `--execute`, and `--yes-create-paid-runpod`. The mutating `run-remote` and `run-handoff` flows also take an atomic local launch lock before pod creation; set `RUNPOD_BRIDGE_LOCK_DIR` or `--lock-dir` if several orchestrators should share one lock directory.
+| Provider surface | Bridge support |
+| --- | --- |
+| RunPod Pods; Hugging Face one-shot Jobs | Automated launch, observation, artifact retrieval, and closeout |
+| AWS | Setup guidance and rendered storage, registry, queue, lock, and cleanup plans |
+| Modal, Lambda Cloud, Beam | Setup guidance for function, batch, and VM compute |
+| fal, Replicate, Together | Setup guidance for managed inference |
+| Boltz, ESM, NVIDIA NIM | Setup guidance for biological inference |
+| Kaggle, Google Cloud | Setup guidance for notebook and batch compute |
 
-For cost attribution, fill `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` in the manifest before launch. These fields are local closeout metadata; provider-side RunPod cost-center assignment should still be verified through the supported operator surface. If `runpod.interruptible` is true, the bridge requires checkpoint/resume policy and durable artifact egress before paid launch.
+`cloud-bridge providers` reports executable support. For other providers, use the documented setup or a project-owned execution path with its own run contract.
 
-For Symphony/Codex workers, first prove the worker shell can reach RunPod REST. Some sandboxed worker runtimes have no outbound DNS/TCP even when `RUNPOD_API_KEY` is injected. In that mode, use the worker for `validate-manifest`, `prepare`, and `run-local`. The prepared packet includes `provider_handoff.json`; run that from an unsandboxed orchestrator or trusted `after_run` hook with `run-handoff`.
+| Decision | Reference |
+| --- | --- |
+| Which provider fits the workload? | [Compute landscape](docs/providers/compute-landscape.md) |
+| Where can I compare offers and benchmarks? | [Compute directories](docs/providers/compute-directories.md) |
+| How do I budget retries, storage, and idle time? | [Selection and operating guide](docs/providers/selection-guide.md) |
+| What does each adapter implement? | [Provider support matrix](docs/providers/README.md) |
 
-For a capped smoke, prefer the single-command remote runner. It creates the pod, verifies declared artifacts, and always attempts cleanup when a pod was created:
+## Run on cloud compute
 
-```bash
-bin/cloud-bridge run-remote path/to/launch_manifest.json \
-  --out-dir .runtime/remote-smoke \
-  --max-spend-usd 5 \
-  --verification-mode auto \
-  --execute \
-  --yes-create-paid-runpod \
-  --yes-cleanup-runpod
-```
+Declare the provider, source, commands, outputs, budget, runtime, and cleanup policy in a manifest. Validate the contract and run preflight before executing. The [RunPod reference](docs/providers/runpod.md) and [Hugging Face Jobs reference](docs/providers/huggingface.md) describe their respective launch commands.
 
-The runner writes one top-level `.runtime/remote-smoke/remote_run_record.json` plus nested create, packet, and cleanup records. `--verification-mode auto` tries direct TCP artifact verification first, then the RunPod HTTP proxy fallback.
+An authorized run produces retrieved artifacts, validation results, hashes, cost records, and a verified cleanup or retention state. Secret values come from runtime injection; manifests contain references.
 
-For worker-to-orchestrator handoff, use the provider handoff instead of retyping the manifest path:
+The RunPod runner uses REST API v1, which retires on **November 15, 2026**. See the [migration reference](docs/providers/runpod.md) for the remaining v2 work.
 
-```bash
-bin/cloud-bridge validate-handoff runpod-execution/provider_handoff.json
-bin/cloud-bridge run-handoff runpod-execution/provider_handoff.json \
-  --out-dir .runtime/handoff-run \
-  --max-spend-usd 5 \
-  --execute \
-  --yes-create-paid-runpod \
-  --yes-cleanup-runpod
-```
+## Use with your agent
 
-Remote inspection and cleanup commands are also available:
+Agents can invoke `cloud-bridge` through a shell or use the bundled [Neocloud Bridge skill](skills/cloud-symphony/SKILL.md), invoked as `$cloud-symphony`. Your agent or workflow engine owns cross-stage dependencies and scheduling. Symphony and Linear are optional integrations for dispatch and issue tracking.
 
-```bash
-bin/cloud-bridge list-pods --name-prefix symphony-
-bin/cloud-bridge get-pod POD_ID
-bin/cloud-bridge gpu-catalog --manifest path/to/launch_manifest.json --json
-bin/cloud-bridge runtime-metrics POD_ID --expected-elapsed-minutes 5 --json
-bin/cloud-bridge progress-report path/to/launch_manifest.json POD_ID --previous .runtime/POD_ID-progress-1.json --out .runtime/POD_ID-progress-2.json
-bin/cloud-bridge pod-ssh-info POD_ID
-bin/cloud-bridge verify-proxy-packet examples/proxy-matrix/launch_manifest.json POD_ID --port 8000 --out-dir .runtime/proxy-matrix-proxy
-bin/cloud-bridge verify-tcp-packet examples/proxy-matrix/launch_manifest.json POD_ID --port 8000 --out-dir .runtime/proxy-matrix-tcp
-bin/cloud-bridge verify-network-volume-s3 examples/runpod-network-volume-s3/launch_manifest.json --out-dir .runtime/network-volume-s3-verify
-bin/cloud-bridge registry-auth-plan path/to/launch_manifest.json
-bin/cloud-bridge cleanup-pod POD_ID --action delete
-bin/cloud-bridge cost-report .runtime/remote-smoke/remote_run_record.json --fetch-billing
-bin/cloud-bridge remote-outcome .runtime/remote-smoke/remote_run_record.json --out runpod-execution/symphony_outcome.md
-bin/cloud-bridge billing-endpoints --start-time 2026-05-01T00:00:00Z --bucket-size day
-bin/cloud-bridge billing-network-volumes --start-time 2026-05-01T00:00:00Z --bucket-size day
-bin/cloud-bridge billing-pods --backend runpodctl --start-time 2026-05-01T00:00:00Z --bucket-size day
-bin/cloud-bridge dashboard --scan-dir .runtime --out .runtime/runpod-dashboard.html
-```
+## Documentation
 
-`preflight` reports rendered RunPod POST body size. Keep inline startup payloads below the bridge hard limit; large embedded scripts/data should be compressed or moved to a repo, packet, network volume, or object store before remote launch.
-
-HTTP proxy and direct TCP packet verification are inspection aids for sanitized, short-lived smoke artifacts. Production or private workloads should use workspace archives plus SCP, network volume, presigned S3 upload, or object-store egress for durable artifact proof. `startup.progress.http_status_server_port` can expose a live `/healthz` progress endpoint during the workload; `startup.inspection.http_artifact_server_port` is a completion-only artifact server that starts after the workload reaches `inspection_hold`. `aws_s3_presigned_upload` can upload the archive with a runtime-injected S3 PUT URL and no AWS credentials in the pod. `object_store_upload` startup support can upload the archive and hash file with the AWS CLI when `RUNPOD_OBJECT_STORE_URI` and runtime credentials are injected. For required object-store modes, pod-side `uploaded` evidence is not final success; closeout requires orchestrator-side object/hash verification recorded as `egress_status: verified`.
-
-Public GitHub repos, public GHCR/Docker Hub images, and public HTTP artifact endpoints are for sanitized smokes only. For private work, use [docs/private-source-storage-runbook.md](docs/private-source-storage-runbook.md): private registry auth through `runpod.containerRegistryAuthId`, prepared snapshots with `archive_url_ref`, or a RunPod network-volume snapshot staged through the S3-compatible API. `source-ingress-plan` renders the exact upload/proof commands for that mounted snapshot path.
-
-Use RunPod Secure Cloud for paid bridge runs by default. Community Cloud is treated as lower-trust shared/peer-hosted compute and is allowed only for explicit public/synthetic sanitized smokes with `safety.community_cloud_allowed: true`.
-
-For an orchestrator-side queue, scan or run prepared handoffs:
-
-```bash
-bin/cloud-bridge orchestrator-scan .runtime
-bin/cloud-bridge orchestrator-once .runtime \
-  --out-root .runtime/orchestrator \
-  --max-spend-usd 5
-```
-
-Use `--execute --yes-create-paid-runpod --yes-cleanup-runpod` only after the handoff is validated and paid launch is authorized.
-
-When a Linear closeout body is ready, post it only with explicit mutation confirmation:
-
-```bash
-bin/cloud-bridge linear-comment TEAM-123 --body-file runpod-execution/symphony_outcome.md --execute --yes-comment-linear
-```
-
-## Built-In Audits
-
-Run `bin/cloud-bridge public-audit` to self-check this repo: required files, JSON validity, manifest validity, contract self-checks, and a text policy check. Run `bin/cloud-bridge audit-manifests <domain-repo> --migration-hints --summary-only` in downstream workload repos to catch stale copied launch bundles before a worker tries to launch them, and drop `--summary-only` when you need per-file details. Run `bin/cloud-bridge audit-runpod-ops <domain-repo> --summary-only` to catch old operational recipes such as direct RunPod REST mutation, local app config key scraping, or split create/cleanup flows. See [docs/manifest-migration-guide.md](docs/manifest-migration-guide.md) and [docs/runpod-status-taxonomy.md](docs/runpod-status-taxonomy.md) when porting older workload bundles.
+- [Agent workflows](docs/agent-workflows.md)
+- [Architecture](docs/architecture.md) and [product brief](docs/product-brief.md)
+- [CLI reference](skills/cloud-symphony/references/cli-reference.md)
+- [Provider adapter contract](docs/provider-adapter-contract.md)
+- [Private source and storage](docs/private-source-storage-runbook.md)
+- [Monitoring](docs/runpod-observability-ladder.md) and [worker readiness](docs/runpod-worker-readiness.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 

@@ -126,8 +126,6 @@ def build_pod_create_command(manifest: dict[str, Any]) -> list[str]:
     add_flag(args, "--min-cuda-version", first_value(runpod.get("allowedCudaVersions")))
     add_flag(args, "--docker-args", shell_join(["bash", "-lc", render_startup_script(manifest)]))
     add_flag(args, "--registry-auth-id", runpod.get("containerRegistryAuthId"))
-    add_flag(args, "--stop-after", minutes_duration(budget.get("stop_after_minutes")))
-    add_flag(args, "--terminate-after", minutes_duration(budget.get("terminate_after_minutes")))
     return [str(item) for item in args if item not in ("", None)]
 
 

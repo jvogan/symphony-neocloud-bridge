@@ -64,7 +64,7 @@
   },
   "runpod": {
     "cloudType": "SECURE",
-    "imageName": "123456789012.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha256-demo",
+    "imageName": "000000000000.dkr.ecr.us-west-2.amazonaws.com/runpod-worker:sha256-demo",
     "templateId": "",
     "name": "symphony-aws-orchestrated-demo",
     "gpuCount": 0,
@@ -138,7 +138,7 @@
     "archive_path": "runpod-execution/artifacts/runpod-execution.tar.gz",
     "destination_uri": "s3://runpod-bridge-demo-artifacts/runs/aws-orchestrated-demo",
     "destination_uri_ref": "",
-    "credentials_ref": "aws-sts:arn:aws:iam::123456789012:role/runpod-bridge-artifact-upload",
+    "credentials_ref": "aws-sts:arn:aws:iam::000000000000:role/runpod-bridge-artifact-upload",
     "requires_network_volume": false,
     "requires_scp": false,
     "requires_object_store_upload": true

@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -129,6 +130,70 @@ class PublicAuditTemplateTests(unittest.TestCase):
             hits = scan_for_sensitive_text(base)
 
         self.assertEqual(hits, [])
+
+    def test_public_audit_blocks_local_path_in_untracked_svg(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            assets = base / "docs" / "assets"
+            assets.mkdir(parents=True)
+            local_path = "/" + "Users/example/private-workspace"
+            (assets / "diagram.svg").write_text(
+                f'<svg xmlns="http://www.w3.org/2000/svg"><text>{local_path}</text></svg>'
+            )
+
+            hits = scan_for_forbidden_text(base)
+
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["path"], "docs/assets/diagram.svg")
+        self.assertEqual(hits[0]["line"], 1)
+
+    def test_public_audit_blocks_secret_in_untracked_excalidraw(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            assets = base / "docs" / "assets"
+            assets.mkdir(parents=True)
+            runtime_key = "RUNPOD" + "_API_KEY"
+            runtime_value = "rp_" + "1234567890abcdefghijklmnop"
+            (assets / "diagram.excalidraw").write_text(json.dumps({
+                "type": "excalidraw",
+                "elements": [{"type": "text", "text": f"{runtime_key}={runtime_value}"}],
+            }))
+
+            hits = scan_for_sensitive_text(base)
+
+        self.assertEqual({hit["path"] for hit in hits}, {"docs/assets/diagram.excalidraw"})
+        self.assertIn("high_confidence_secret", {hit["kind"] for hit in hits})
+        self.assertIn("secret_assignment", {hit["kind"] for hit in hits})
+
+    def test_public_audit_scans_root_contributor_and_security_docs(self):
+        for name in ("CONTRIBUTING.md", "SECURITY.md"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp)
+                local_path = "/" + "Users/example/private-workspace"
+                runtime_value = "rp_" + "1234567890abcdefghijklmnop"
+                (base / name).write_text(f"{local_path}\n{runtime_value}\n")
+
+                paths = scan_for_forbidden_text(base)
+                secrets = scan_for_sensitive_text(base)
+
+                self.assertEqual({hit["path"] for hit in paths}, {name})
+                self.assertEqual({hit["path"] for hit in secrets}, {name})
+
+    def test_public_audit_allows_clean_visual_assets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            assets = base / "docs" / "assets"
+            assets.mkdir(parents=True)
+            (assets / "diagram.svg").write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"><text>Verify artifacts</text></svg>'
+            )
+            (assets / "diagram.excalidraw").write_text(json.dumps({
+                "type": "excalidraw",
+                "elements": [{"type": "text", "text": "Verify artifacts"}],
+            }))
+
+            self.assertEqual(scan_for_forbidden_text(base), [])
+            self.assertEqual(scan_for_sensitive_text(base), [])
 
 
 if __name__ == "__main__":

@@ -95,7 +95,7 @@ def provider_capabilities(provider: str = "runpod") -> dict[str, Any]:
                     "productivity-plan",
                 ],
                 "optional_runpodctl_commands": ["render-runpodctl-create", "pod-ssh-info"],
-                "runtime_backstop": "budget.terminate_after_minutes renders to runpodctl pod create --terminate-after",
+                "runtime_backstop": "budget.terminate_after_minutes is an orchestrator cleanup deadline; current CLI and REST paths do not enforce it provider-side",
             },
             "runtime_metrics": {
                 "surface": "RunPod GraphQL pod.runtime",

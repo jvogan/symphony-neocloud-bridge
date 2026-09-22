@@ -12,7 +12,7 @@ Use this reference when the short happy path in `SKILL.md` is not enough.
 - `validate-linear-issue`: validate a Linear issue body.
 - `issue-intake`: validate an issue plus manifest and prepare a handoff packet.
 - `render-startup`: render the startup script without launching.
-- `render-runpodctl-create`: render the equivalent `runpodctl pod create` command, including `--terminate-after`, without launching.
+- `render-runpodctl-create`: render the equivalent Pod creation command without launching. Omits the lifecycle flags removed in `runpodctl` v2.12.0.
 - `plan`: print the dry-run execution plan.
 - `preflight`: run launch, profile, provider, contract, bootstrap image-capability, payload-size, productivity, and egress checks.
 - `egress-plan`: render artifact egress requirements, including AWS S3 presigned upload env refs when declared.

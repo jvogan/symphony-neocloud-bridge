@@ -27,7 +27,7 @@ RunPod Flash and generic Serverless endpoints are now important RunPod surfaces,
 
 Interruptible Pods are appropriate only for retryable, checkpointed workloads. Before paid launch, require a checkpoint policy, explicit resume or rerun policy, and durable artifact egress such as a network volume, RunPod network-volume S3, SCP, object-store upload, or presigned upload.
 
-When `runpodctl` is available, `render-runpodctl-create` shows the equivalent pod creation command and includes `--terminate-after` from `budget.terminate_after_minutes`. The REST create path records that value for audit and runtime awareness, but official docs expose the platform-side stop/delete backstop through `runpodctl pod create`.
+When `runpodctl` is available, `render-runpodctl-create` shows the equivalent Pod creation command. `budget.terminate_after_minutes` remains an orchestrator cleanup deadline because current RunPod CLI and REST creation paths do not enforce it provider-side.
 
 ## Efficient Monitoring
 

@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "symphony_cloud_launch",
+  "provider": {
+    "name": "runpod",
+    "adapter": "runpod_pod_v1"
+  },
+  "run_id": "research-table-qc",
+  "compute_profile": "cheap-cpu-pod-dryrun",
+  "workload": {
+    "scale": "small",
+    "description": "Validate a synthetic expression-count table and produce a checked summary and report",
+    "shards": [],
+    "checkpoint_policy": {
+      "mode": "none"
+    },
+    "stage_contract": {
+      "inputs": [
+        "examples/research-table-qc/counts.csv",
+        "examples/research-table-qc/workflow.py"
+      ],
+      "exact_commands": [
+        "python3 examples/research-table-qc/workflow.py summarize --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts",
+        "python3 examples/research-table-qc/workflow.py report --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts",
+        "python3 examples/research-table-qc/workflow.py validate --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts"
+      ],
+      "expected_outputs": [
+        "runpod-execution/artifacts/qc.json",
+        "runpod-execution/artifacts/report.md"
+      ],
+      "done_markers": [
+        "runpod-execution/status.json",
+        "runpod-execution/artifacts/qc.json",
+        "runpod-execution/artifacts/report.md"
+      ],
+      "timeout_minutes": 5,
+      "resume_policy": "Rerun both stages from the input table; overwrite derived files only after input checks pass",
+      "fail_closed": true,
+      "claim_level": "artifact_execution_only",
+      "route_proof": {
+        "input_materialization": [
+          "Read the checked-in synthetic count table from the repository workdir"
+        ],
+        "tool_invocation": [
+          "python3 examples/research-table-qc/workflow.py summarize --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts",
+          "python3 examples/research-table-qc/workflow.py report --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts"
+        ],
+        "artifact_validation": [
+          "python3 examples/research-table-qc/workflow.py validate --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts",
+          "runpod-execution/artifacts/qc.json",
+          "runpod-execution/artifacts/report.md"
+        ],
+        "claim_boundaries": [
+          "Structural count-table checks and sample totals; scientific interpretation belongs to the analysis project"
+        ]
+      }
+    }
+  },
+  "remote_launch_allowed": false,
+  "budget": {
+    "max_runtime_minutes": 5,
+    "terminate_after_minutes": 10,
+    "max_estimated_cost_usd": 1
+  },
+  "repo": {
+    "source": "local_snapshot",
+    "url_or_path": ".",
+    "commit_or_snapshot": "local-research-table-qc",
+    "workdir": "/workspace/repo"
+  },
+  "runpod": {
+    "cloudType": "SECURE",
+    "imageName": "python:3.12-slim",
+    "templateId": "",
+    "name": "neocloud-research-table-qc",
+    "gpuCount": 0,
+    "gpuTypeIds": [],
+    "dataCenterIds": [],
+    "networkVolumeId": "",
+    "containerDiskInGb": 10,
+    "volumeInGb": 0,
+    "volumeMountPath": "/workspace",
+    "ports": [],
+    "env": {}
+  },
+  "access": {
+    "ssh_required": false,
+    "full_ssh_scp_required": false,
+    "http_proxy_required": false,
+    "tcp_ports_required": false,
+    "ssh_public_key_ref": "",
+    "public_services_require_auth": true
+  },
+  "startup": {
+    "mode": "dockerStartCmd",
+    "log_file": "runpod-execution/logs/startup.log",
+    "status_file": "runpod-execution/status.json",
+    "heartbeat_file": "runpod-execution/monitor_events.ndjson",
+    "commands": [
+      "python3 examples/research-table-qc/workflow.py summarize --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts",
+      "python3 examples/research-table-qc/workflow.py report --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts"
+    ]
+  },
+  "monitoring": {
+    "poll_interval_seconds": 30,
+    "max_silent_minutes": 5,
+    "record_pod_fields": [
+      "id",
+      "desiredStatus",
+      "lastStartedAt",
+      "lastStatusChange",
+      "costPerHr",
+      "adjustedCostPerHr",
+      "machine.dataCenterId"
+    ],
+    "requires_workload_heartbeat": true,
+    "requires_status_file": true,
+    "requires_log_artifact": true
+  },
+  "validation_commands": [
+    "python3 examples/research-table-qc/workflow.py validate --input examples/research-table-qc/counts.csv --out runpod-execution/artifacts"
+  ],
+  "expected_artifacts": [
+    {
+      "artifact_id": "count_summary",
+      "path": "runpod-execution/artifacts/qc.json",
+      "required": true,
+      "sha256_required": true
+    },
+    {
+      "artifact_id": "count_report",
+      "path": "runpod-execution/artifacts/report.md",
+      "required": true,
+      "sha256_required": true
+    }
+  ],
+  "artifact_egress": {
+    "mode": "workspace_archive",
+    "archive_path": "runpod-execution/artifacts/research-table-qc.tar.gz",
+    "requires_network_volume": false,
+    "requires_scp": false,
+    "requires_object_store_upload": false
+  },
+  "worker_coordination": {
+    "linear_issue_lock_required": true,
+    "single_mutating_worker": true,
+    "read_only_monitors_allowed": true,
+    "resource_name_prefix": "neocloud-research-table-qc"
+  },
+  "closeout": {
+    "record_runtime_minutes": true,
+    "record_cost_estimate": true,
+    "prefer_billing_api_cost": true,
+    "record_artifact_hashes": true,
+    "stop_or_delete_pod": true,
+    "delete_pod_if_network_volume_attached": true,
+    "linear_outcome_required": true,
+    "retain_pod": false
+  },
+  "safety": {
+    "no_literal_secrets": true,
+    "private_data_policy": "secure-store references or sanitized data only"
+  }
+}

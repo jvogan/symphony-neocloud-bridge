@@ -1,4 +1,4 @@
 interface:
-  display_name: "Cloud Symphony"
-  short_description: "Remote compute run checks"
-  default_prompt: "Use $cloud-symphony to prepare a guarded remote-compute run packet."
+  display_name: "Neocloud Bridge"
+  short_description: "Cloud compute for AI-agent workflows"
+  default_prompt: "Use $cloud-symphony to execute this workload on the provider I selected, preserving provider choice and enforcing bounded retries and cost, artifact validation and hashes, cancellation or cleanup, and parseable receipts."

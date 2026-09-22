@@ -16,7 +16,7 @@ There are two names to keep distinct:
 ### Adopted Now
 
 - `runpodctl` read-only fallback: `pod-ssh-info`, billing commands with `--backend runpodctl`, and `render-runpodctl-create`.
-- Platform-side runtime backstop metadata: `budget.terminate_after_minutes` renders to `runpodctl pod create --terminate-after`.
+- Cleanup deadline: `budget.terminate_after_minutes` is enforced by the orchestrator. Current RunPod CLI and REST creation paths do not enforce it provider-side.
 - Explicit RunPod network-volume S3 egress mode: `runpod_network_volume_s3`.
 - Operator guidance for restricted API keys and cost centers without claiming unsupported programmatic lifecycle.
 
@@ -96,7 +96,7 @@ Bridge shape:
 - Use `pod-ssh-info` to fetch SSH command details through `runpodctl ssh info`.
 - Use `billing-pods --backend runpodctl`, `billing-endpoints --backend runpodctl`, and `billing-network-volumes --backend runpodctl` for read-only billing checks when `runpodctl` is configured.
 - Use `runpodctl registry list/get/create/delete` only from a trusted orchestrator to manage provider-side private registry auth. Registry passwords and tokens are operational secrets and must not appear in manifests or Linear comments.
-- Use `render-runpodctl-create` to inspect the `runpodctl pod create` command and confirm `--terminate-after` is present.
+- Use `render-runpodctl-create` to inspect the startup command. RunPod CLI v2.12.0 removed the former lifecycle flags; configure an independent cleanup backstop.
 - Use `runpodctl send`/`receive` only as an explicit operator-assisted recovery or artifact transfer path because connection codes are operational secrets and should not be posted in Linear.
 
 ### 6. Network Volume S3 Egress

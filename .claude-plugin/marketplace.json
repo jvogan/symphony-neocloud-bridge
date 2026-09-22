@@ -5,16 +5,16 @@
   },
   "metadata": {
     "version": "0.1.0",
-    "description": "Public-safe remote compute handoff and validation skills."
+    "description": "Cloud compute skills for AI-agent research and engineering workflows."
   },
   "plugins": [
     {
       "name": "cloud-symphony",
-      "displayName": "Cloud Symphony",
+      "displayName": "Neocloud Bridge",
       "source": "./",
-      "description": "Prepare guarded remote-compute run packets.",
+      "description": "Plan cloud runs, chain tools through validated artifacts, and track resource costs.",
       "category": "developer-tools",
-      "tags": ["cloud-compute", "symphony", "runpod"],
+      "tags": ["cloud-compute", "neocloud", "ai-agents", "research", "runpod", "huggingface"],
       "strict": false,
       "skills": ["./skills/cloud-symphony"]
     }

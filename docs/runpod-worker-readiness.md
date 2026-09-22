@@ -13,7 +13,7 @@ Use this checklist before letting Symphony workers launch or monitor RunPod reso
 - Symphony Codex worker shell sandboxes may not have outbound DNS/TCP even when environment variables are injected. Treat worker-side `create-pod`, `get-pod`, and packet verification as available only after a real network preflight proves shell networking works.
 - The committed bridge CLI now covers local `doctor`, `audit-manifests`, `validate-manifest`, `contract-self-check`, `preflight`, `profiles`, `provider-capabilities`, `linear-issue`, `linear-comment`, `render-startup`, `render-runpodctl-create`, `plan`, `prepare`, `source-ingress-plan`, `write-handoff`, `validate-handoff`, `issue-intake`, `run-local`, `monitor`, `supervise`, `dashboard`, `closeout`, and `remote-outcome`.
 - The committed bridge CLI also includes guarded RunPod REST/GraphQL operations: `run-handoff`, `run-remote`, `orchestrator-scan`, `orchestrator-once`, `create-pod`, `list-pods`, `get-pod`, `gpu-catalog`, `runtime-metrics`, `billing-pods`, `billing-endpoints`, `billing-network-volumes`, `cost-report`, `list-network-volumes`, `get-network-volume`, `list-templates`, `get-template`, `recover-run`, and `cleanup-pod`.
-- Optional `runpodctl` integration covers read-only SSH info, billing fallback, and non-mutating pod create command rendering with `--terminate-after`.
+- Optional `runpodctl` integration covers read-only SSH information, billing fallback, and non-mutating Pod create command rendering.
 - Remote mutation remains blocked unless the manifest passes launch gates, records `launch_authorization`, and the caller supplies the explicit paid-resource or cleanup confirmation flag.
 - `run-remote` and `run-handoff` acquire an atomic local launch lock keyed by resource prefix before paid creation. Use `RUNPOD_BRIDGE_LOCK_DIR` or `--lock-dir` when multiple orchestrators share a host or mounted lock directory.
 - Workspace archive egress, generic object-store archive upload, and RunPod network-volume S3 planning are supported by the bridge. Direct SCP transfer remains adapter work.
@@ -45,12 +45,12 @@ Use this checklist before letting Symphony workers launch or monitor RunPod reso
 - Use `cloud-bridge cost-report --fetch-billing` after remote cleanup when the RunPod billing API is reachable.
 - Use `cloud-bridge billing-endpoints` and `cloud-bridge billing-network-volumes` for non-pod cost closeout when Serverless endpoints or retained volumes are involved.
 - Use `cloud-bridge billing-pods --backend runpodctl`, `billing-endpoints --backend runpodctl`, or `billing-network-volumes --backend runpodctl` when the operator host has `runpodctl` configured.
-- Use `cloud-bridge render-runpodctl-create <manifest>` to inspect the equivalent `runpodctl pod create` command and confirm both `--docker-args` startup execution and `--terminate-after` are present when platform-side deletion backstop is required.
+- Use `cloud-bridge render-runpodctl-create <manifest>` to inspect the startup command. Cleanup deadlines remain orchestrator-owned.
 - Use `cloud-bridge pod-ssh-info <pod-id>` to fetch SSH details through `runpodctl ssh info`; do not paste private key material or one-time transfer codes into Linear.
 - Use `cloud-bridge recover-run` on failed or interrupted run records before manually inspecting the console.
 - Use `cloud-bridge verify-proxy-packet` or `cloud-bridge verify-tcp-packet` only for short-lived, sanitized smokes.
 - Optional `flash` CLI for future RunPod Flash app/function validation. Do not let Flash deploys bypass `remote_launch_allowed`, budget, artifact proof, and undeploy policy.
-- Optional `runpodctl` for CLI fallback, endpoint inspection, SSH key management, billing reads, `--terminate-after` pod creation, and operator-assisted file transfer. Current official CLI docs expose `runpodctl ssh info`, not a documented generic pod exec channel; installing `runpodctl` helps only if SSH can be established.
+- Optional `runpodctl` supports billing reads, SSH information, key management, command review, and operator-assisted file transfer. Remote SSH still requires a reachable endpoint.
 - Optional SSH public key registered in RunPod if workers need SSH. Full SSH/SCP also requires a public IP-capable pod, exposed `22/tcp`, and an SSH daemon inside the image/template.
 - Optional object-store or network-volume policy for large artifact egress. Do not put storage credentials in manifests or Linear.
 
@@ -126,7 +126,7 @@ When AWS is used as the orchestrator companion, run `aws-orchestrator-plan` from
 ## Runtime And Secret Backstops
 
 - `budget.max_estimated_cost_usd` is still a bridge-side soft cap, not a provider kill switch.
-- `budget.terminate_after_minutes` renders to `runpodctl pod create --terminate-after` for a platform-side deletion backstop when an operator uses the `runpodctl` create path. The REST create path records the value in runtime env but does not enforce it platform-side.
+- `budget.terminate_after_minutes` is an orchestrator cleanup deadline. Current CLI and REST creation paths do not enforce it provider-side.
 - Use restricted or read-only RunPod API keys where possible. The current official docs show console-managed create/edit/disable/delete flows; do not assume the bridge can safely mint and revoke per-run keys until an official API or CLI support is verified.
 - Cost centers should be assigned in the RunPod console or future API/CLI support as part of operator closeout. Until then, keep Linear issue IDs in pod names and bridge records for spend reconciliation.
 

@@ -1,0 +1,371 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {},
+  "elements": [
+    {
+      "type": "text",
+      "id": "title",
+      "x": 40,
+      "y": 25,
+      "text": "A cloud run, with a verifiable outcome",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "sub",
+      "x": 40,
+      "y": 80,
+      "text": "Plan locally. Authorize execution. Validate outputs and close resources.",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#536b7d",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box0",
+      "x": 40,
+      "y": 155,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#f0f4f8",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head0",
+      "x": 64,
+      "y": 179,
+      "text": "01  Define the contract",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body0",
+      "x": 64,
+      "y": 232,
+      "text": "Provider and exact workload\nBudget, deadlines, and outputs",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box1",
+      "x": 470,
+      "y": 155,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#f0f4f8",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head1",
+      "x": 494,
+      "y": 179,
+      "text": "02  Check and prepare",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body1",
+      "x": 494,
+      "y": 232,
+      "text": "Self-check and local preflight\nRequest or handoff packet",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box2",
+      "x": 900,
+      "y": 155,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#eaf2ff",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head2",
+      "x": 924,
+      "y": 179,
+      "text": "03  Launch once",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body2",
+      "x": 924,
+      "y": 232,
+      "text": "Explicit authorization\nRecord the provider resource ID",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box3",
+      "x": 900,
+      "y": 400,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#eaf2ff",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head3",
+      "x": 924,
+      "y": 424,
+      "text": "04  Observe the workload",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body3",
+      "x": 924,
+      "y": 477,
+      "text": "Provider state and progress\nDeadline, cancellation, recovery",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box4",
+      "x": 470,
+      "y": 400,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#e8f5ef",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head4",
+      "x": 494,
+      "y": 424,
+      "text": "05  Verify artifacts",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body4",
+      "x": 494,
+      "y": 477,
+      "text": "Retrieve required outputs\nRun validators and hash files",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "box5",
+      "x": 40,
+      "y": 400,
+      "width": 370,
+      "height": 170,
+      "backgroundColor": "#e8f5ef",
+      "strokeColor": "#cbd5df",
+      "strokeWidth": 1,
+      "fillStyle": "solid",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "head5",
+      "x": 64,
+      "y": 424,
+      "text": "06  Close the run",
+      "fontSize": 25,
+      "fontFamily": 2,
+      "strokeColor": "#142b3b",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "body5",
+      "x": 64,
+      "y": 477,
+      "text": "Verify cleanup or retention\nRecord cost and final outcome",
+      "fontSize": 21,
+      "fontFamily": 2,
+      "strokeColor": "#395468",
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 420,
+      "y": 240,
+      "width": 40,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          40,
+          0
+        ]
+      ],
+      "strokeColor": "#597286",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "a2",
+      "x": 850,
+      "y": 240,
+      "width": 40,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          40,
+          0
+        ]
+      ],
+      "strokeColor": "#597286",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "a3",
+      "x": 1085,
+      "y": 335,
+      "width": 0,
+      "height": 55,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          55
+        ]
+      ],
+      "strokeColor": "#597286",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "a4",
+      "x": 890,
+      "y": 485,
+      "width": 40,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -40,
+          0
+        ]
+      ],
+      "strokeColor": "#597286",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "endArrowhead": "arrow"
+    },
+    {
+      "type": "arrow",
+      "id": "a5",
+      "x": 460,
+      "y": 485,
+      "width": 40,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -40,
+          0
+        ]
+      ],
+      "strokeColor": "#597286",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "endArrowhead": "arrow"
+    }
+  ]
+}

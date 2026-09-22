@@ -1,7 +1,7 @@
 {
   "name": "symphony-neocloud-bridge",
   "interface": {
-    "displayName": "Symphony Neocloud Bridge"
+    "displayName": "Neocloud Bridge"
   },
   "plugins": [
     {

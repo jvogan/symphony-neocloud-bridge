@@ -82,5 +82,5 @@ Monitor loops should use `progress-report --previous ... --out ...` and report `
 
 ## Operator Tools
 
-- Install `runpodctl` on trusted orchestrator hosts when possible. It improves SSH info lookup, billing fallback, and rendered `--terminate-after` create commands.
+- Install `runpodctl` on trusted orchestrator hosts when useful for SSH information, billing fallback, and create-command review.
 - Treat Flash and generic Serverless as separate adapter lanes. Do not route them through the pod runner until the manifest names a provider path with automated launch support and the bridge enforces deploy/job/output/undeploy gates.

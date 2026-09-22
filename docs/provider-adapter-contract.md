@@ -2,7 +2,7 @@
 
 The bridge should keep domain workloads provider-neutral. The manifest separates common execution needs from provider-specific resource fields, and every provider entry is shaped around the same closeout/evidence contract: status, hashes, egress proof, spend notes, and cleanup proof.
 
-Some provider paths expose automated launch support through guarded CLI commands. Others are setup guidance only: they capture launch constraints, auth, monitoring, artifact movement, cost, cleanup, and first-smoke requirements, but they reject paid/mutating launch through the bridge. That distinction is a safety gate, not the point of the repo.
+Some provider paths expose automated launch support through guarded CLI commands. Others are setup guidance only: they capture launch constraints, auth, monitoring, artifact movement, cost, cleanup, and first-smoke requirements, but they reject paid/mutating launch through the bridge. "Setup guidance only" describes this bridge's implementation; it does not revoke explicit provider authorization or prohibit a separate, independently guarded provider-native path. That distinction is a safety gate, not the point of the repo.
 
 ## Provider Adapters
 
@@ -10,22 +10,20 @@ Some provider paths expose automated launch support through guarded CLI commands
 
 | Provider | Adapter | Category | Support | Reference |
 | --- | --- | --- | --- | --- |
-| RunPod | `runpod_pod_v1` | compute_rental | automated launch support | [runpod.md](providers/runpod.md) |
-| Modal | `modal_function_v1` | compute_rental | setup guidance | [modal.md](providers/modal.md) |
-| Lambda Cloud | `lambda_cloud_vm_v1` | compute_rental | setup guidance | [lambda.md](providers/lambda.md) |
-| AWS | `aws_v1` | compute_rental | setup guidance plus rendered cloud-glue plans | [aws.md](providers/aws.md) |
-| Beam | `beam_function_v1` | compute_rental | setup guidance | [neoclouds.md](providers/neoclouds.md) |
-| HuggingFace | `huggingface_v1` | notebook_job | automated launch support for Jobs; setup guidance for other HF surfaces | [huggingface.md](providers/huggingface.md) |
-| Boltz | `boltz_api_v1` | managed_inference | setup guidance | [bio-inference.md](providers/bio-inference.md) |
-| ESM (biohub) | `esm_forge_v1` | managed_inference | setup guidance | [bio-inference.md](providers/bio-inference.md) |
-| NVIDIA NIM | `nvidia_nim_v1` | managed_inference | setup guidance | [bio-inference.md](providers/bio-inference.md) |
-| Replicate | `replicate_prediction_v1` | managed_inference | setup guidance | [neoclouds.md](providers/neoclouds.md) |
-| fal | `fal_queue_v1` | managed_inference | setup guidance | [neoclouds.md](providers/neoclouds.md) |
-| Together | `together_v1` | managed_inference | setup guidance | [neoclouds.md](providers/neoclouds.md) |
-| Kaggle | `kaggle_kernel_v1` | notebook_job | setup guidance | [notebook-compute.md](providers/notebook-compute.md) |
-| GCP (Vertex/Colab) | `gcp_vertex_v1` | notebook_job | setup guidance | [notebook-compute.md](providers/notebook-compute.md) |
-
-Consumer Google Colab is deliberately **not** an adapter: it has no run-API and its ToS bans headless/automated use — see [notebook-compute.md](providers/notebook-compute.md).
+| RunPod | `runpod_pod_v1` | `compute_rental` | Automated | [runpod.md](providers/runpod.md) |
+| Modal | `modal_function_v1` | `compute_rental` | Setup guidance | [modal.md](providers/modal.md) |
+| Lambda Cloud | `lambda_cloud_vm_v1` | `compute_rental` | Setup guidance | [lambda.md](providers/lambda.md) |
+| AWS | `aws_v1` | `compute_rental` | Setup guidance with rendered plans | [aws.md](providers/aws.md) |
+| Beam | `beam_function_v1` | `compute_rental` | Setup guidance | [neoclouds.md](providers/neoclouds.md) |
+| Hugging Face | `huggingface_v1` | `notebook_job` | Automated for Jobs; setup guidance for other surfaces | [huggingface.md](providers/huggingface.md) |
+| Boltz | `boltz_api_v1` | `managed_inference` | Setup guidance | [bio-inference.md](providers/bio-inference.md) |
+| ESM (Biohub) | `esm_forge_v1` | `managed_inference` | Setup guidance | [bio-inference.md](providers/bio-inference.md) |
+| NVIDIA NIM | `nvidia_nim_v1` | `managed_inference` | Setup guidance | [bio-inference.md](providers/bio-inference.md) |
+| Replicate | `replicate_prediction_v1` | `managed_inference` | Setup guidance | [neoclouds.md](providers/neoclouds.md) |
+| fal | `fal_queue_v1` | `managed_inference` | Setup guidance | [neoclouds.md](providers/neoclouds.md) |
+| Together | `together_v1` | `managed_inference` | Setup guidance | [neoclouds.md](providers/neoclouds.md) |
+| Kaggle | `kaggle_kernel_v1` | `notebook_job` | Setup guidance | [notebook-compute.md](providers/notebook-compute.md) |
+| Google Cloud Vertex AI | `gcp_vertex_v1` | `notebook_job` | Setup guidance | [notebook-compute.md](providers/notebook-compute.md) |
 
 Provider entries declare the portable contract below and reject paid execution unless that path has a guarded runner. Each reference doc captures launch, auth, monitoring, durable egress, cost, cleanup constraints, and the first public smoke needed before an agent should rely on the guidance for real spend.
 
@@ -33,15 +31,20 @@ Provider entries declare the portable contract below and reject paid execution u
 
 Every adapter declares a `category` (shown by `cloud-bridge providers`) that fixes its cleanup and budget semantics. The closeout and cost gates differ by category, so the bridge must not assume one shape fits all:
 
-- `compute_rental` — rent a machine or serverless function; a forgotten resource bills until explicitly torn down (RunPod, Modal, Lambda, AWS-as-compute). Closeout must prove the resource is gone.
-- `managed_inference` — call a hosted model API (protein-structure, LLM, embedding endpoints); there is usually nothing to tear down, but token/credit budgets, rate limits, and per-call cost caps apply, and a dedicated/managed endpoint left running is the exception that still bills.
-- `notebook_job` — submit a notebook or job to managed hardware; runtimes or kernels must be deleted to stop billing.
+- `compute_rental`: rent a machine, Pod, or function. The resource can keep billing until it is removed, so closeout must prove termination.
+- `managed_inference`: call a hosted model API. Bound per-call costs, retries, and rate limits. Persistent endpoint variants require a separate cleanup contract.
+- `notebook_job`: submit a job to managed hardware. Verify job termination and account for any runtime, schedule, or attached storage that can persist.
 
-A `managed_inference` provider path has no pod to delete but must still bound spend and verify the returned artifact; a `compute_rental` path's closeout must prove termination. New provider entries should pick the category that matches how the operator is actually billed, not how the workload feels.
+A `managed_inference` path has no pod to delete, but it must still bound spend and verify the returned artifact. A `compute_rental` path must prove termination at closeout. Choose the category that matches how the provider bills the resource.
 
-**Category is per provider path, set by the default or recommended surface's cleanup posture.** A provider often exposes more than one surface (Replicate predictions vs deployments; Together serverless/batch vs dedicated; HuggingFace Jobs/Inference Providers vs Inference Endpoints). The `category` reflects the cleanup posture of the default/recommended path, and any more-dangerous secondary surface is flagged in that entry's `known_patterns`. HuggingFace is tagged `notebook_job` for Jobs, a one-shot job that auto-terminates; its bill-forever Inference Endpoints trap rides in `known_patterns`, not the tag. For a provider path whose primary surfaces include a persistent bill-forever one, take the conservative `compute_rental` tag; where the bill-forever surface is a secondary opt-in (Replicate deployments, Together dedicated), keep `managed_inference` and flag the risk. Treat `category` as billing and cleanup posture, not the workload type.
+Set the category for a specific provider surface, not for the provider's complete product range:
 
-**Provider-entry criterion.** Add a registered provider entry when the user names a provider or when the provider carries a distinct invocation, billing, or cleanup pattern worth gating and learning against. Together is represented for its distinct async Batch API; NVIDIA NIM for its two-tier hosted/self-host opposite-cleanup pattern. Pure substitutes that add no new pattern and aggregators over already-represented model families can stay in reference docs until they need their own setup path.
+- Use the billing and cleanup behavior of the adapter's primary surface.
+- Record secondary persistent surfaces in `known_patterns` and give them separate lifecycle rules.
+- Use `compute_rental` when the adapter's primary surface can bill until explicit teardown.
+- Treat the category as a billing and cleanup classification, not a workload classification.
+
+Add a provider entry when it needs a distinct invocation, billing, artifact, or cleanup gate. Keep equivalent products in reference documentation until they need their own adapter path.
 
 ## Common Contract
 
@@ -81,11 +84,11 @@ The local `cloud-bridge` CLI includes a stdlib REST adapter for the RunPod pod l
 - `billing-pods` and `cost-report` use the REST billing surface when available, with runtime x cost fields as fallback.
 - `billing-pods`, `billing-endpoints`, and `billing-network-volumes` can use `--backend runpodctl` for read-only billing checks when the operator host has `runpodctl`.
 - Optional `billing.cost_center`, `billing.project_code`, and `billing.resource_owner` manifest fields preserve local attribution even when provider-side cost-center assignment remains operator-managed.
-- `render-runpodctl-create` renders `budget.terminate_after_minutes` to `runpodctl pod create --terminate-after`; the REST create path records the value but does not enforce it platform-side.
+- `budget.terminate_after_minutes` is an orchestrator cleanup deadline. Current RunPod REST and `runpodctl` creation paths do not enforce it provider-side.
 - `orchestrator-scan`, `orchestrator-once`, and `issue-intake` make worker handoff packets executable by a trusted orchestrator lane.
-- `dashboard`, `supervise`, and `recover-run` support multi-run monitoring and failure cleanup.
+- `dashboard` summarizes RunPod and Hugging Face run records. `supervise` and `recover-run` currently use the RunPod execution and cleanup contract.
 
-The adapter still depends on workload-written logs, heartbeats, status files, and artifacts because direct pod log streaming and in-pod exec are not available through the observed MCP surface.
+The adapter still depends on workload-written logs, heartbeats, status files, and artifacts. Its current RunPod integration does not provide direct pod log retrieval or in-pod command execution.
 
 HTTP proxy and direct TCP verification are deliberately treated as non-authoritative for private or production workloads. Durable artifact proof should use the declared workspace archive plus SCP, network volume, RunPod network-volume S3, AWS S3 presigned upload, or object-store upload.
 
